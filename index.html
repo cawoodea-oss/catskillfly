@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="theme-color" content="#1a2e1a">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-title" content="CatskillFly">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Catskill Fly — Recent Reports</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -806,6 +808,7 @@ const PAGE_SIZE = 20;
 let currentSession = null;
 try { currentSession = JSON.parse(localStorage.getItem('sb_session')); } catch(e) {}
 if (!currentSession?.access_token) window.location.href = 'login.html';
+startAutoRefresh();
 
 let allLogs     = [];
 let filtered    = [];
@@ -1174,5 +1177,6 @@ function formatTime(t) {
 // ── INIT ──
 fetchLogs();
 </script>
+<script src="auth.js"></script>
 </body>
 </html>

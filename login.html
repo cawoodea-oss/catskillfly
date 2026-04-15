@@ -264,22 +264,10 @@ const SUPABASE_KEY = 'sb_publishable_gWCvq372JoF8aoUQIcz-zw_eLV_NoDc';
 
 // If already logged in, redirect to feed
 async function checkSession() {
-  const stored = localStorage.getItem('sb_session');
-  if (stored) {
-    try {
-      const session = JSON.parse(stored);
-      if (session?.access_token) {
-        // Verify token is still valid
-        const res = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
-          headers: {
-            'apikey': SUPABASE_KEY,
-            'Authorization': 'Bearer ' + session.access_token
-          }
-        });
-        if (res.ok) { window.location.href = 'index.html'; return; }
-      }
-    } catch(e) {}
-    localStorage.removeItem('sb_session');
+  const session = await getValidSession();
+  if (session) {
+    startAutoRefresh();
+    window.location.href = 'index.html';
   }
 }
 checkSession();
@@ -330,7 +318,8 @@ async function signIn() {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error_description || data.msg || 'Sign in failed');
-    localStorage.setItem('sb_session', JSON.stringify(data));
+    saveSession(data);
+    startAutoRefresh();
     window.location.href = 'index.html';
   } catch(e) {
     showError(e.message);
@@ -359,8 +348,8 @@ async function signUp() {
     if (!res.ok) throw new Error(data.error_description || data.msg || 'Sign up failed');
 
     if (data.access_token) {
-      // Auto-confirmed — save session and redirect
-      localStorage.setItem('sb_session', JSON.stringify(data));
+      saveSession(data);
+      startAutoRefresh();
       window.location.href = 'index.html';
     } else {
       showSuccess('Account created! Check your email to confirm, then sign in.');
@@ -397,5 +386,6 @@ document.addEventListener('keydown', e => {
   }
 });
 </script>
+<script src="auth.js"></script>
 </body>
 </html>

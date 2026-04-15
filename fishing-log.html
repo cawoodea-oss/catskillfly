@@ -492,6 +492,16 @@
     border: 3px solid var(--cream);
   }
 
+  .upload-spinner {
+    width: 14px; height: 14px;
+    border: 2px solid var(--border);
+    border-top-color: var(--fern);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    flex-shrink: 0;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
   /* ── AUTO-FILL BANNER ── */
   .autofill-banner {
     background: linear-gradient(135deg, #e8f4e5, #e3eef7);
@@ -834,7 +844,19 @@
         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--stone)" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
         <p><strong>Tap to add photos</strong><br>Fish, scenery, hatches — share the day</p>
       </div>
-      <input type="file" id="photo-input" accept="image/*" multiple onchange="previewPhotos(this)">
+      <input type="file" id="photo-input" accept="image/*" multiple onchange="uploadPhotos(this)">
+
+      <!-- Upload progress -->
+      <div id="photo-progress" style="display:none;margin-top:10px">
+        <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--stone);margin-bottom:6px">
+          <div class="upload-spinner"></div>
+          <span id="upload-status">Uploading photos…</span>
+        </div>
+        <div style="height:4px;background:var(--border);border-radius:2px;overflow:hidden">
+          <div id="upload-bar" style="height:100%;background:var(--fern);width:0%;transition:width 0.3s;border-radius:2px"></div>
+        </div>
+      </div>
+
       <div class="photo-preview" id="photo-preview"></div>
 
       <label style="margin-top:16px;">Trip notes</label>
@@ -1022,19 +1044,88 @@ function setRating(n) {
   document.querySelectorAll('.star').forEach((s,i) => s.classList.toggle('lit', i<n));
 }
 
-// Photos
-function previewPhotos(input) {
-  const preview = document.getElementById('photo-preview');
-  Array.from(input.files).forEach(file => {
+// Photos — upload to Supabase Storage immediately on selection
+let uploadedPhotoUrls = [];
+
+async function uploadPhotos(input) {
+  const files = Array.from(input.files);
+  if (!files.length) return;
+
+  const preview  = document.getElementById('photo-preview');
+  const progress = document.getElementById('photo-progress');
+  const bar      = document.getElementById('upload-bar');
+  const status   = document.getElementById('upload-status');
+
+  progress.style.display = 'block';
+  let uploaded = 0;
+
+  for (const file of files) {
+    // Show local preview immediately
     const reader = new FileReader();
     reader.onload = e => {
+      const wrapper = document.createElement('div');
+      wrapper.style.cssText = 'position:relative;display:inline-block';
       const img = document.createElement('img');
       img.className = 'photo-thumb';
       img.src = e.target.result;
-      preview.appendChild(img);
+      img.style.opacity = '0.5';
+      img.id = 'thumb-' + file.name.replace(/\W/g,'');
+      wrapper.appendChild(img);
+      preview.appendChild(wrapper);
     };
     reader.readAsDataURL(file);
-  });
+
+    // Upload to Supabase Storage
+    try {
+      const ext      = file.name.split('.').pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+      const filePath = `trips/${fileName}`;
+
+      const res = await fetch(
+        `${SUPABASE_URL}/storage/v1/object/trip-photos/${filePath}`,
+        {
+          method: 'POST',
+          headers: {
+            'apikey':        SUPABASE_KEY,
+            'Authorization': 'Bearer ' + SUPABASE_KEY,
+            'Content-Type':  file.type,
+            'x-upsert':      'true'
+          },
+          body: file
+        }
+      );
+
+      if (!res.ok) {
+        const err = await res.text();
+        console.error('Upload failed:', err);
+        status.textContent = `⚠ Upload failed for ${file.name}`;
+      } else {
+        // Build public URL
+        const publicUrl =
+          `${SUPABASE_URL}/storage/v1/object/public/trip-photos/${filePath}`;
+        uploadedPhotoUrls.push(publicUrl);
+
+        // Make preview full opacity now that it's uploaded
+        const thumb = document.getElementById('thumb-' + file.name.replace(/\W/g,''));
+        if (thumb) thumb.style.opacity = '1';
+      }
+    } catch (e) {
+      console.error('Upload error:', e);
+    }
+
+    uploaded++;
+    const pct = Math.round((uploaded / files.length) * 100);
+    bar.style.width = pct + '%';
+    status.textContent = uploaded < files.length
+      ? `Uploading ${uploaded + 1} of ${files.length}…`
+      : `${uploaded} photo${uploaded > 1 ? 's' : ''} ready`;
+  }
+
+  // Hide spinner, keep bar green as confirmation
+  setTimeout(() => {
+    progress.style.display = 'none';
+    bar.style.width = '0%';
+  }, 2000);
 }
 
 // GPS
@@ -1325,7 +1416,7 @@ async function submitLog() {
     rating:              rating || null,
     visibility:          visibility,
     spot_precision:      spotPrec,
-    photo_urls:          null
+    photo_urls:          uploadedPhotoUrls.length ? uploadedPhotoUrls : null
   };
 
   // ── Send to Supabase ──
@@ -1352,6 +1443,8 @@ async function submitLog() {
 
     btn.textContent = '✓ Trip logged! Tight lines.';
     btn.style.background = 'var(--water)';
+    uploadedPhotoUrls = [];
+    document.getElementById('photo-preview').innerHTML = '';
     setTimeout(() => {
       btn.textContent = 'Post this trip →';
       btn.style.background = 'var(--forest)';

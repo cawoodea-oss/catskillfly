@@ -38,7 +38,7 @@
     background: var(--forest);
     color: var(--ink);
     min-height: 100vh;
-    padding-bottom: 100px;
+    padding-bottom: 140px;
   }
 
   /* ── HERO HEADER ── */
@@ -453,6 +453,45 @@
   }
   .unit-opt.active { background: var(--forest); color: var(--cream); }
 
+  /* ── NAV BAR ── */
+  .nav-bar {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: var(--card-bg);
+    border-top: 1px solid var(--border);
+    display: flex;
+    padding: 10px 0 max(10px, env(safe-area-inset-bottom));
+    z-index: 100;
+    box-shadow: 0 -4px 20px rgba(26,46,26,0.08);
+  }
+  .nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--stone);
+    text-decoration: none;
+    cursor: pointer;
+    transition: color 0.15s;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .nav-item.active { color: var(--fern); }
+  .nav-item svg { transition: transform 0.15s; }
+  .nav-item.active svg { transform: scale(1.1); }
+  .nav-log {
+    width: 44px; height: 44px;
+    background: var(--forest);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin-top: -20px;
+    box-shadow: 0 4px 14px rgba(26,46,26,0.35);
+    border: 3px solid var(--cream);
+  }
+
   /* ── AUTO-FILL BANNER ── */
   .autofill-banner {
     background: linear-gradient(135deg, #e8f4e5, #e3eef7);
@@ -835,6 +874,32 @@
 
 </div>
 </div>
+
+<!-- NAV BAR -->
+<nav class="nav-bar">
+  <a class="nav-item" href="index.html" style="text-decoration:none">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    Feed
+  </a>
+  <div class="nav-item">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    Discover
+  </div>
+  <a class="nav-item active" href="fishing-log.html" style="text-decoration:none">
+    <div class="nav-log">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    </div>
+    Log
+  </a>
+  <div class="nav-item">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+    Map
+  </div>
+  <div class="nav-item">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    Profile
+  </div>
+</nav>
 
 <script>
 // Live clock

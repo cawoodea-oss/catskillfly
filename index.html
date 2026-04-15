@@ -804,24 +804,31 @@ const SUPABASE_URL = 'https://csdahuhrsxeumqmjsidw.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_gWCvq372JoF8aoUQIcz-zw_eLV_NoDc';
 const PAGE_SIZE = 20;
 
-// Auth
 let currentSession = null;
-try { currentSession = JSON.parse(localStorage.getItem('sb_session')); } catch(e) {}
-if (!currentSession?.access_token) window.location.href = 'login.html';
-startAutoRefresh();
-
 let allLogs     = [];
 let filtered    = [];
 let displayed   = 0;
 let activeFilter = 'all';
 let searchTerm   = '';
 
+// ── INIT — validate session then fetch ──
+async function init() {
+  currentSession = await getValidSession();
+  if (!currentSession) { window.location.href = 'login.html'; return; }
+  startAutoRefresh();
+  fetchLogs();
+}
+
 // ── FETCH ──
 async function fetchLogs() {
   try {
+    // Re-get session in case it was refreshed
+    const session = await getValidSession() || currentSession;
+    const token   = session?.access_token || SUPABASE_KEY;
+
     const res = await fetch(
       `${SUPABASE_URL}/rest/v1/trip_logs?select=*&order=trip_date.desc,created_at.desc&limit=200`,
-      { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + (currentSession?.access_token || SUPABASE_KEY) } }
+      { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + token } }
     );
     if (!res.ok) throw new Error(await res.text());
     allLogs = await res.json();
@@ -1175,7 +1182,7 @@ function formatTime(t) {
 }
 
 // ── INIT ──
-fetchLogs();
+init();
 </script>
 <script src="auth.js"></script>
 </body>

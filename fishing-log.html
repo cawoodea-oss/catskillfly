@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="theme-color" content="#1a2e1a">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-title" content="CatskillFly">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Rise & Report — Log a Trip</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1233,15 +1235,43 @@ async function uploadPhotos(input) {
 function getLocation() {
   const el = document.getElementById('location-text');
   el.textContent = 'Getting GPS…';
-  if (!navigator.geolocation) { el.textContent = 'Not available'; return; }
-  navigator.geolocation.getCurrentPosition(pos => {
-    window._lat = pos.coords.latitude;
-    window._lng = pos.coords.longitude;
-    el.textContent = `${pos.coords.latitude.toFixed(4)}° N`;
-    setTimeout(() => {
-      document.getElementById('autofill-banner').style.display = 'flex';
-    }, 600);
-  }, () => { el.textContent = 'Tap for GPS'; });
+
+  if (!navigator.geolocation) {
+    el.textContent = 'GPS unavailable';
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      window._lat = pos.coords.latitude;
+      window._lng = pos.coords.longitude;
+      el.textContent = `${pos.coords.latitude.toFixed(4)}° N`;
+      setTimeout(() => {
+        document.getElementById('autofill-banner').style.display = 'flex';
+      }, 600);
+    },
+    err => {
+      console.warn('GPS error:', err.code, err.message);
+      if (err.code === 1) {
+        el.textContent = 'Location denied';
+        // Show a helpful toast
+        const toast = document.createElement('div');
+        toast.style.cssText = `position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#b44040;color:white;padding:10px 18px;border-radius:20px;font-size:13px;z-index:999;box-shadow:0 4px 16px rgba(0,0,0,0.25);white-space:nowrap;max-width:90vw;text-align:center`;
+        toast.textContent = 'Location blocked — enable in browser settings or use Pick on map';
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 4000);
+      } else if (err.code === 2) {
+        el.textContent = 'GPS unavailable';
+      } else {
+        el.textContent = 'Tap for GPS';
+      }
+    },
+    {
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 60000
+    }
+  );
 }
 
 // Auto-fill — show banner (called after GPS or map pick sets coordinates)
@@ -1777,5 +1807,6 @@ function confirmMapLocation() {
   }, 300);
 }
 </script>
+<script src="auth.js"></script>
 </body>
 </html>

@@ -347,6 +347,240 @@
     padding-top: 10px;
   }
 
+  /* ── FULL REPORT SHEET ── */
+  .sheet-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.55);
+    z-index: 200;
+    display: flex;
+    align-items: flex-end;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+  }
+  .sheet-overlay.open {
+    opacity: 1;
+    pointer-events: all;
+  }
+  .report-sheet {
+    background: var(--cream);
+    border-radius: 20px 20px 0 0;
+    width: 100%;
+    max-height: 92vh;
+    overflow-y: auto;
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(0.32,0.72,0,1);
+    padding-bottom: 40px;
+  }
+  .sheet-overlay.open .report-sheet {
+    transform: translateY(0);
+  }
+
+  /* Sheet drag handle */
+  .sheet-handle {
+    display: flex;
+    justify-content: center;
+    padding: 12px 0 6px;
+  }
+  .sheet-handle div {
+    width: 36px; height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+  }
+
+  /* Sheet header */
+  .sheet-header {
+    padding: 4px 18px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .sheet-river {
+    font-family: var(--font-serif);
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--forest);
+    line-height: 1.2;
+    margin-bottom: 4px;
+  }
+  .sheet-sub {
+    font-size: 13px;
+    color: var(--stone);
+    line-height: 1.5;
+  }
+  .sheet-close {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    background: var(--parchment);
+    border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    font-size: 16px;
+    color: var(--stone);
+    margin-top: 2px;
+  }
+
+  /* Sheet photos */
+  .sheet-photos {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 14px 18px;
+    scrollbar-width: none;
+  }
+  .sheet-photos::-webkit-scrollbar { display: none; }
+  .sheet-photo {
+    flex-shrink: 0;
+    width: 200px; height: 150px;
+    border-radius: 10px;
+    object-fit: cover;
+    border: 1px solid var(--border);
+  }
+
+  /* Sheet sections */
+  .sheet-section {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    margin: 10px 14px 0;
+    overflow: hidden;
+  }
+  .sheet-section-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border);
+    background: var(--parchment);
+  }
+  .sheet-section-title span {
+    font-family: var(--font-serif);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--forest);
+  }
+  .sheet-section-icon {
+    width: 24px; height: 24px;
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+
+  /* Grid of data pairs */
+  .data-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+  }
+  .data-cell {
+    padding: 11px 14px;
+    border-right: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+  .data-cell:nth-child(even) { border-right: none; }
+  .data-cell:nth-last-child(-n+2) { border-bottom: none; }
+  .data-cell label {
+    font-size: 10px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--stone);
+    display: block;
+    margin-bottom: 3px;
+  }
+  .data-cell p {
+    font-size: 14px;
+    color: var(--ink);
+    font-weight: 500;
+  }
+
+  /* Chip rows inside sheet */
+  .sheet-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 12px 14px;
+  }
+  .sheet-chip {
+    font-size: 12px;
+    background: var(--parchment);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 4px 10px;
+    color: var(--ink);
+  }
+  .sheet-chip.hatch {
+    background: #fff8f0;
+    border-color: rgba(201,132,58,0.25);
+    color: var(--amber);
+  }
+  .sheet-chip.fly {
+    background: #e8f4e5;
+    border-color: rgba(61,107,54,0.2);
+    color: var(--fern);
+  }
+
+  /* Fly table */
+  .fly-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  .fly-table th {
+    text-align: left;
+    padding: 8px 14px;
+    font-size: 10px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--stone);
+    border-bottom: 1px solid var(--border);
+    background: var(--parchment);
+  }
+  .fly-table td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    color: var(--ink);
+  }
+  .fly-table tr:last-child td { border-bottom: none; }
+  .fly-table td:not(:first-child) { text-align: center; color: var(--stone); }
+
+  /* Notes block */
+  .sheet-notes {
+    padding: 14px;
+    font-size: 14px;
+    color: var(--ink);
+    line-height: 1.65;
+    font-style: italic;
+  }
+
+  /* Rating stars */
+  .sheet-stars {
+    padding: 10px 14px;
+    display: flex;
+    gap: 4px;
+    align-items: center;
+  }
+  .sheet-star { font-size: 20px; color: #ddd; }
+  .sheet-star.lit { color: var(--amber); }
+
+  /* Privacy badge */
+  .privacy-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    padding: 3px 9px;
+    border-radius: 10px;
+    background: var(--parchment);
+    border: 1px solid var(--border);
+    color: var(--stone);
+    margin-top: 4px;
+  }
+
   /* ── EMPTY STATE ── */
   .empty-state {
     text-align: center;
@@ -527,6 +761,14 @@
     Load more reports ↓
   </button>
 
+</div>
+
+<!-- FULL REPORT SHEET -->
+<div class="sheet-overlay" id="report-overlay" onclick="closeReportIfBackground(event)">
+  <div class="report-sheet" id="report-sheet">
+    <div class="sheet-handle"><div></div></div>
+    <div id="report-content"></div>
+  </div>
 </div>
 
 <!-- NAV BAR -->
@@ -717,7 +959,7 @@ function renderLogs(append) {
     row.style.animationDelay = (i * 0.04) + 's';
 
     row.innerHTML = `
-      <div class="log-row" onclick="toggleDetail('${log.id}')">
+      <div class="log-row" onclick="openReport('${log.id}')">
         <div class="log-date">
           <strong>${dateStr}</strong>
           ${yearStr}
@@ -730,20 +972,6 @@ function renderLogs(append) {
         <div class="log-cell">${fishTotal || '—'}<small>fish</small></div>
         <div class="log-cell">${temp}</div>
         <div class="log-cell"><div class="rating-dots">${dots}</div></div>
-      </div>
-      <div class="log-detail" id="detail-${log.id}">
-        <div class="detail-grid">
-          ${log.flow_cfs     ? `<div class="detail-item"><label>Flow</label><p>${log.flow_cfs} cfs</p></div>` : ''}
-          ${log.air_temp     ? `<div class="detail-item"><label>Air temp</label><p>${log.air_temp}°${log.temp_unit||'F'}</p></div>` : ''}
-          ${log.start_time   ? `<div class="detail-item"><label>On water</label><p>${formatTime(log.start_time)} – ${formatTime(log.end_time)}</p></div>` : ''}
-          ${speciesBreakdown ? `<div class="detail-item"><label>Catch</label><p>${speciesBreakdown}</p></div>` : ''}
-          ${log.biggest_fish_length ? `<div class="detail-item"><label>Biggest fish</label><p>${log.biggest_fish_length}"${log.biggest_fish_weight ? ' · ' + log.biggest_fish_weight + ' lb' : ''}</p></div>` : ''}
-          ${log.hatch_intensity ? `<div class="detail-item"><label>Hatch intensity</label><p>${log.hatch_intensity}${log.hatch_timing ? ' · ' + log.hatch_timing : ''}</p></div>` : ''}
-        </div>
-        ${hatches   ? `<div class="detail-chips">${hatches}</div>` : ''}
-        ${condChips ? `<div class="detail-chips" style="margin-top:6px">${condChips}</div>` : ''}
-        ${log.trip_notes ? `<div class="detail-notes">"${log.trip_notes}"</div>` : ''}
-        ${log.hatch_notes && !log.trip_notes ? `<div class="detail-notes">"${log.hatch_notes}"</div>` : ''}
       </div>`;
 
     logbook.appendChild(row);
@@ -755,10 +983,180 @@ function renderLogs(append) {
 
 function loadMore() { renderLogs(true); }
 
-function toggleDetail(id) {
-  const el = document.getElementById('detail-' + id);
-  if (!el) return;
-  el.classList.toggle('open');
+function openReport(id) {
+  const log = allLogs.find(l => l.id === id);
+  if (!log) return;
+
+  // Respect privacy — only show full detail for public reports
+  // (friends only and private still show in feed but with limited detail)
+  const isPrivate = log.visibility === 'Private';
+
+  const dateObj = log.trip_date ? new Date(log.trip_date + 'T12:00:00') : null;
+  const dateStr = dateObj ? dateObj.toLocaleDateString('en-US', {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+  }) : '—';
+
+  let fishTotal = 0;
+  if (log.fish_counts) Object.values(log.fish_counts).forEach(v => fishTotal += parseInt(v)||0);
+
+  const speciesRows = log.fish_counts
+    ? Object.entries(log.fish_counts).map(([sp, ct]) =>
+        `<tr><td>${sp}</td><td>${ct}</td></tr>`).join('')
+    : '';
+
+  const flyRows = (log.flies_used || []).map(f =>
+    `<tr>
+      <td>${f.pattern || '—'}</td>
+      <td>${f.size || '—'}</td>
+      <td>${f.caught || '0'}</td>
+      <td>${f.notes || ''}</td>
+    </tr>`).join('');
+
+  const stars = [1,2,3,4,5].map(n =>
+    `<span class="sheet-star${log.rating && n <= log.rating ? ' lit' : ''}">★</span>`
+  ).join('');
+
+  const hatchChips = (log.hatches || []).map(h =>
+    `<span class="sheet-chip hatch">${h}</span>`).join('');
+
+  const skyChips = (log.sky || []).map(s =>
+    `<span class="sheet-chip">${s}</span>`).join('');
+
+  const photos = (log.photo_urls || []).map(url =>
+    `<img class="sheet-photo" src="${url}" alt="Trip photo">`).join('');
+
+  const privacyIcon = log.visibility === 'Public' ? '🌍'
+    : log.visibility === 'Private' ? '🔒' : '👥';
+
+  document.getElementById('report-content').innerHTML = `
+    <div class="sheet-header">
+      <div>
+        <div class="sheet-river">${log.river || 'Unknown water'}</div>
+        <div class="sheet-sub">
+          ${log.section ? log.section + ' · ' : ''}${dateStr}
+        </div>
+        <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;align-items:center">
+          ${log.fishing_method ? `<span class="sheet-chip" style="margin:0">${log.fishing_method}</span>` : ''}
+          <span class="privacy-badge">${privacyIcon} ${log.visibility || 'Friends only'}</span>
+        </div>
+      </div>
+      <div class="sheet-close" onclick="closeReport()">✕</div>
+    </div>
+
+    ${photos ? `<div class="sheet-photos">${photos}</div>` : ''}
+
+    ${isPrivate ? `
+      <div style="padding:20px 18px;text-align:center;color:var(--stone);font-size:13px">
+        🔒 This report is private
+      </div>` : `
+
+    <!-- Conditions -->
+    <div class="sheet-section">
+      <div class="sheet-section-title">
+        <div class="sheet-section-icon" style="background:#e3eef7">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3d7a9c" stroke-width="2"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9z"/></svg>
+        </div>
+        <span>Conditions</span>
+      </div>
+      <div class="data-grid">
+        <div class="data-cell"><label>Water temp</label><p>${log.water_temp ? log.water_temp + '°' + (log.temp_unit||'F') : '—'}</p></div>
+        <div class="data-cell"><label>Air temp</label><p>${log.air_temp ? log.air_temp + '°' + (log.temp_unit||'F') : '—'}</p></div>
+        <div class="data-cell"><label>Flow</label><p>${log.flow_cfs ? Math.round(log.flow_cfs) + ' cfs' : '—'}</p></div>
+        <div class="data-cell"><label>Barometer</label><p>${log.barometric_pressure || '—'}</p></div>
+        <div class="data-cell"><label>Water clarity</label><p>${log.water_clarity || '—'}</p></div>
+        <div class="data-cell"><label>Wind</label><p>${log.wind || '—'}</p></div>
+        ${log.start_time ? `<div class="data-cell"><label>On water</label><p>${formatTime(log.start_time)}${log.end_time ? ' – ' + formatTime(log.end_time) : ''}</p></div>` : ''}
+      </div>
+      ${skyChips ? `<div class="sheet-chips">${skyChips}</div>` : ''}
+    </div>
+
+    <!-- Hatches -->
+    ${log.hatches?.length ? `
+    <div class="sheet-section">
+      <div class="sheet-section-title">
+        <div class="sheet-section-icon" style="background:#f7ede0">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#c9843a" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <span>Hatches</span>
+      </div>
+      <div class="sheet-chips">${hatchChips}</div>
+      ${log.hatch_intensity || log.hatch_timing ? `
+      <div class="data-grid">
+        ${log.hatch_intensity ? `<div class="data-cell"><label>Intensity</label><p>${log.hatch_intensity}</p></div>` : ''}
+        ${log.hatch_timing   ? `<div class="data-cell"><label>Timing</label><p>${log.hatch_timing}</p></div>` : ''}
+      </div>` : ''}
+      ${log.hatch_notes ? `<div class="sheet-notes">"${log.hatch_notes}"</div>` : ''}
+    </div>` : ''}
+
+    <!-- Fly Setup -->
+    ${log.fly_line || flyRows ? `
+    <div class="sheet-section">
+      <div class="sheet-section-title">
+        <div class="sheet-section-icon" style="background:#e0f0ee">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2a7a72" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 12l2 2 4-4"/></svg>
+        </div>
+        <span>Fly setup</span>
+      </div>
+      ${log.fly_line || log.line_weight || log.tippet_size ? `
+      <div class="data-grid">
+        ${log.fly_line      ? `<div class="data-cell"><label>Line</label><p>${log.fly_line}</p></div>` : ''}
+        ${log.line_weight   ? `<div class="data-cell"><label>Weight</label><p>${log.line_weight}</p></div>` : ''}
+        ${log.leader_length ? `<div class="data-cell"><label>Leader</label><p>${log.leader_length}</p></div>` : ''}
+        ${log.tippet_size   ? `<div class="data-cell"><label>Tippet</label><p>${log.tippet_size} ${log.tippet_material || ''}</p></div>` : ''}
+      </div>` : ''}
+      ${flyRows ? `
+      <table class="fly-table">
+        <thead><tr><th>Pattern</th><th>Size</th><th>Caught</th><th>Notes</th></tr></thead>
+        <tbody>${flyRows}</tbody>
+      </table>` : ''}
+    </div>` : ''}
+
+    <!-- Catch -->
+    ${fishTotal > 0 || speciesRows ? `
+    <div class="sheet-section">
+      <div class="sheet-section-title">
+        <div class="sheet-section-icon" style="background:#e8f4e5">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3d6b36" stroke-width="2"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/></svg>
+        </div>
+        <span>Catch — ${fishTotal} fish to hand</span>
+      </div>
+      ${speciesRows ? `
+      <table class="fly-table">
+        <thead><tr><th>Species</th><th>Count</th></tr></thead>
+        <tbody>${speciesRows}</tbody>
+      </table>` : ''}
+      ${log.biggest_fish_length ? `
+      <div class="data-grid">
+        <div class="data-cell"><label>Biggest fish</label><p>${log.biggest_fish_length}"${log.biggest_fish_weight ? ' · ' + log.biggest_fish_weight + ' lb' : ''}</p></div>
+        ${log.fishing_method ? `<div class="data-cell"><label>Method</label><p>${log.fishing_method}</p></div>` : ''}
+      </div>` : ''}
+    </div>` : ''}
+
+    <!-- Notes & Rating -->
+    ${log.trip_notes || log.rating ? `
+    <div class="sheet-section">
+      <div class="sheet-section-title">
+        <div class="sheet-section-icon" style="background:#ede8f5">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6a4da0" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </div>
+        <span>Notes</span>
+      </div>
+      ${log.rating ? `<div class="sheet-stars">${stars}<span style="font-size:12px;color:var(--stone);margin-left:6px">${log.rating}/5</span></div>` : ''}
+      ${log.trip_notes ? `<div class="sheet-notes">"${log.trip_notes}"</div>` : ''}
+    </div>` : ''}
+
+    `}`;
+
+  document.getElementById('report-overlay').classList.add('open');
+  document.getElementById('report-sheet').scrollTop = 0;
+}
+
+function closeReport() {
+  document.getElementById('report-overlay').classList.remove('open');
+}
+
+function closeReportIfBackground(e) {
+  if (e.target === document.getElementById('report-overlay')) closeReport();
 }
 
 function formatTime(t) {

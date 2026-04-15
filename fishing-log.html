@@ -875,8 +875,8 @@
 
       <label>Visibility</label>
       <div class="chip-row">
-        <div class="chip" onclick="toggleChip(this,'exclusive',this.closest('.section-body'))">🌍 Public</div>
-        <div class="chip active" onclick="toggleChip(this,'exclusive',this.closest('.section-body'))">👥 Friends only</div>
+        <div class="chip active" onclick="toggleChip(this,'exclusive',this.closest('.section-body'))">🌍 Public</div>
+        <div class="chip" onclick="toggleChip(this,'exclusive',this.closest('.section-body'))">👥 Friends only</div>
         <div class="chip" onclick="toggleChip(this,'exclusive',this.closest('.section-body'))">🔒 Private</div>
       </div>
 
@@ -917,10 +917,10 @@
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
     Map
   </div>
-  <div class="nav-item">
+  <a class="nav-item" href="profile.html" style="text-decoration:none">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
     Profile
-  </div>
+  </a>
 </nav>
 
 <script>
@@ -1075,9 +1075,14 @@ async function uploadPhotos(input) {
     };
     reader.readAsDataURL(file);
 
-    // Upload to Supabase Storage
+    // Compress before upload
     try {
-      const ext      = file.name.split('.').pop();
+      const compressed = await compressImage(file);
+      const sizeBefore = (file.size / 1024).toFixed(0);
+      const sizeAfter  = (compressed.size / 1024).toFixed(0);
+      console.log(`Compressed ${file.name}: ${sizeBefore}KB → ${sizeAfter}KB`);
+
+      const ext      = 'jpg';
       const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
       const filePath = `trips/${fileName}`;
 
@@ -1087,11 +1092,11 @@ async function uploadPhotos(input) {
           method: 'POST',
           headers: {
             'apikey':        SUPABASE_KEY,
-            'Authorization': 'Bearer ' + SUPABASE_KEY,
-            'Content-Type':  file.type,
+            'Authorization': 'Bearer ' + (currentSession?.access_token || SUPABASE_KEY),
+            'Content-Type':  'image/jpeg',
             'x-upsert':      'true'
           },
-          body: file
+          body: compressed
         }
       );
 
@@ -1315,6 +1320,37 @@ async function doAutofill() {
 const SUPABASE_URL = 'https://csdahuhrsxeumqmjsidw.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_gWCvq372JoF8aoUQIcz-zw_eLV_NoDc';
 
+// ── AUTH CHECK ──
+let currentSession = null;
+function getSession() {
+  try {
+    const s = localStorage.getItem('sb_session');
+    return s ? JSON.parse(s) : null;
+  } catch(e) { return null; }
+}
+currentSession = getSession();
+if (!currentSession?.access_token) window.location.href = 'login.html';
+
+// ── PHOTO COMPRESSION ──
+function compressImage(file, maxWidth = 1400, quality = 0.82) {
+  return new Promise(resolve => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        const scale  = Math.min(1, maxWidth / img.width);
+        const canvas = document.createElement('canvas');
+        canvas.width  = Math.round(img.width  * scale);
+        canvas.height = Math.round(img.height * scale);
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob(blob => resolve(blob), 'image/jpeg', quality);
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 async function submitLog() {
   const btn = document.querySelector('.submit-btn');
 
@@ -1416,7 +1452,8 @@ async function submitLog() {
     rating:              rating || null,
     visibility:          visibility,
     spot_precision:      spotPrec,
-    photo_urls:          uploadedPhotoUrls.length ? uploadedPhotoUrls : null
+    photo_urls:          uploadedPhotoUrls.length ? uploadedPhotoUrls : null,
+    user_id:             currentSession?.user?.id || null
   };
 
   // ── Send to Supabase ──
@@ -1430,7 +1467,7 @@ async function submitLog() {
       headers: {
         'Content-Type':  'application/json',
         'apikey':        SUPABASE_KEY,
-        'Authorization': 'Bearer ' + SUPABASE_KEY,
+        'Authorization': 'Bearer ' + (currentSession?.access_token || SUPABASE_KEY),
         'Prefer':        'return=minimal'
       },
       body: JSON.stringify(record)

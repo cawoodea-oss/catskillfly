@@ -702,6 +702,7 @@
   }
   .search-input::placeholder { color: var(--stone); }
 </style>
+<script src="auth.js"></script>
 </head>
 <body>
 
@@ -811,21 +812,45 @@ let displayed   = 0;
 let activeFilter = 'all';
 let searchTerm   = '';
 
-// ── INIT — validate session then fetch ──
+// ── Inline auth helpers (avoids auth.js timing issues) ──
+function getSession() {
+  try { return JSON.parse(localStorage.getItem('sb_session')); } catch(e) { return null; }
+}
+
+async function getValidSession() {
+  let session = getSession();
+  if (!session?.access_token) return null;
+  // Check if token expires within 5 min
+  if (session.expires_at && Date.now() > (session.expires_at * 1000) - 5 * 60 * 1000) {
+    try {
+      const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY },
+        body: JSON.stringify({ refresh_token: session.refresh_token })
+      });
+      if (res.ok) {
+        session = await res.json();
+        localStorage.setItem('sb_session', JSON.stringify(session));
+      }
+    } catch(e) { console.warn('Token refresh failed:', e); }
+  }
+  return session;
+}
+
+// ── INIT ──
 async function init() {
   currentSession = await getValidSession();
-  if (!currentSession) { window.location.href = 'login.html'; return; }
-  startAutoRefresh();
+  if (!currentSession?.access_token) {
+    window.location.href = 'login.html';
+    return;
+  }
   fetchLogs();
 }
 
 // ── FETCH ──
 async function fetchLogs() {
   try {
-    // Re-get session in case it was refreshed
-    const session = await getValidSession() || currentSession;
-    const token   = session?.access_token || SUPABASE_KEY;
-
+    const token = currentSession?.access_token || SUPABASE_KEY;
     const res = await fetch(
       `${SUPABASE_URL}/rest/v1/trip_logs?select=*&order=trip_date.desc,created_at.desc&limit=200`,
       { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + token } }
@@ -1182,8 +1207,13 @@ function formatTime(t) {
 }
 
 // ── INIT ──
-init();
+// Synchronous check first — redirect immediately if no session
+if (!getSession()?.access_token) {
+  window.location.href = 'login.html';
+} else {
+  init();
+}
 </script>
-<script src="auth.js"></script>
+
 </body>
 </html>

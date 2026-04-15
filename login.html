@@ -203,6 +203,7 @@
     position: relative;
   }
 </style>
+<script src="auth.js"></script>
 </head>
 <body>
 
@@ -264,11 +265,12 @@ const SUPABASE_KEY = 'sb_publishable_gWCvq372JoF8aoUQIcz-zw_eLV_NoDc';
 
 // If already logged in, redirect to feed
 async function checkSession() {
-  const session = await getValidSession();
-  if (session) {
-    startAutoRefresh();
-    window.location.href = 'index.html';
-  }
+  try {
+    const s = JSON.parse(localStorage.getItem('sb_session'));
+    if (s?.access_token) {
+      window.location.href = 'index.html';
+    }
+  } catch(e) {}
 }
 checkSession();
 
@@ -318,8 +320,7 @@ async function signIn() {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error_description || data.msg || 'Sign in failed');
-    saveSession(data);
-    startAutoRefresh();
+    localStorage.setItem('sb_session', JSON.stringify(data));
     window.location.href = 'index.html';
   } catch(e) {
     showError(e.message);
@@ -348,8 +349,7 @@ async function signUp() {
     if (!res.ok) throw new Error(data.error_description || data.msg || 'Sign up failed');
 
     if (data.access_token) {
-      saveSession(data);
-      startAutoRefresh();
+      localStorage.setItem('sb_session', JSON.stringify(data));
       window.location.href = 'index.html';
     } else {
       showSuccess('Account created! Check your email to confirm, then sign in.');
@@ -386,6 +386,5 @@ document.addEventListener('keydown', e => {
   }
 });
 </script>
-<script src="auth.js"></script>
 </body>
 </html>

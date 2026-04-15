@@ -1,0 +1,1122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="theme-color" content="#1a2e1a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Catskill Fly — Discover</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+  :root {
+    --forest:    #1a2e1a;
+    --moss:      #2e4a2a;
+    --fern:      #3d6b36;
+    --sage:      #6a9c5f;
+    --mist:      #c8dfc4;
+    --cream:     #f5f0e8;
+    --water:     #2a4a5e;
+    --current:   #3d7a9c;
+    --amber:     #c9843a;
+    --stone:     #7a7060;
+    --parchment: #ede8dc;
+    --ink:       #1e1c18;
+    --card-bg:   #ffffff;
+    --border:    rgba(50,70,40,0.15);
+    --shadow:    0 2px 16px rgba(26,46,26,0.08);
+    --radius:    14px;
+    --font-serif: 'Playfair Display', Georgia, serif;
+    --font-sans:  'DM Sans', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: var(--font-sans);
+    background: var(--cream);
+    color: var(--ink);
+    min-height: 100vh;
+    padding-bottom: 80px;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    background: linear-gradient(160deg, var(--forest) 0%, var(--moss) 60%, var(--water) 100%);
+    padding: 52px 20px 28px;
+    position: relative;
+    overflow: hidden;
+  }
+  .header::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  }
+  .header::after {
+    content: '';
+    position: absolute;
+    bottom: -1px; left: 0; right: 0;
+    height: 28px;
+    background: var(--cream);
+    clip-path: ellipse(55% 100% at 50% 100%);
+  }
+  .header-inner {
+    position: relative;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  .header-eyebrow {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--sage);
+    margin-bottom: 6px;
+  }
+  .header h1 {
+    font-family: var(--font-serif);
+    font-size: clamp(24px, 6vw, 34px);
+    font-weight: 600;
+    color: var(--cream);
+    line-height: 1.15;
+    margin-bottom: 14px;
+  }
+
+  /* ── LOCATION BAR ── */
+  .location-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .loc-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 20px;
+    padding: 7px 14px;
+    font-size: 13px;
+    color: var(--mist);
+    cursor: pointer;
+    backdrop-filter: blur(4px);
+    transition: background 0.2s;
+    flex: 1;
+    max-width: 240px;
+  }
+  .loc-pill:active { background: rgba(255,255,255,0.2); }
+  .loc-pill svg { flex-shrink: 0; opacity: 0.8; }
+  .region-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 20px;
+    padding: 7px 14px;
+    font-size: 13px;
+    color: var(--mist);
+    cursor: pointer;
+    backdrop-filter: blur(4px);
+    transition: background 0.2s;
+    font-family: var(--font-sans);
+  }
+  .region-btn:active { background: rgba(255,255,255,0.2); }
+
+  /* ── PAGE BODY ── */
+  .page-body {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px 14px;
+  }
+
+  /* ── MAP ── */
+  .map-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    margin-bottom: 16px;
+    position: relative;
+  }
+  #map {
+    height: 260px;
+    width: 100%;
+    z-index: 1;
+  }
+  .map-legend {
+    padding: 10px 14px;
+    display: flex;
+    gap: 14px;
+    border-top: 1px solid var(--border);
+    background: var(--parchment);
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    color: var(--stone);
+  }
+  .legend-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* ── SUMMARY STATS ── */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .stat-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    text-align: center;
+    box-shadow: var(--shadow);
+  }
+  .stat-num {
+    font-family: var(--font-serif);
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--forest);
+    line-height: 1;
+    margin-bottom: 3px;
+  }
+  .stat-label {
+    font-size: 11px;
+    color: var(--stone);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  /* ── SECTION HEADING ── */
+  .section-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    margin-top: 4px;
+  }
+  .section-heading h2 {
+    font-family: var(--font-serif);
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--forest);
+  }
+  .section-heading span {
+    font-size: 12px;
+    color: var(--stone);
+  }
+
+  /* ── SEARCH ── */
+  .search-wrap {
+    position: relative;
+    margin-bottom: 12px;
+  }
+  .search-wrap svg {
+    position: absolute;
+    left: 12px; top: 50%;
+    transform: translateY(-50%);
+    color: var(--stone);
+    pointer-events: none;
+  }
+  .search-input {
+    width: 100%;
+    padding: 10px 14px 10px 36px;
+    font-family: var(--font-sans);
+    font-size: 14px;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    outline: none;
+    color: var(--ink);
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .search-input:focus {
+    border-color: var(--fern);
+    box-shadow: 0 0 0 3px rgba(61,107,54,0.10);
+  }
+  .search-input::placeholder { color: var(--stone); }
+
+  /* ── HOT THIS WEEK ── */
+  .hot-scroll {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    margin-bottom: 18px;
+    scrollbar-width: none;
+  }
+  .hot-scroll::-webkit-scrollbar { display: none; }
+  .hot-card {
+    flex-shrink: 0;
+    width: 150px;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px;
+    box-shadow: var(--shadow);
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .hot-card:active { transform: scale(0.97); }
+  .hot-badge {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--amber);
+    margin-bottom: 5px;
+  }
+  .hot-river {
+    font-family: var(--font-serif);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--forest);
+    line-height: 1.3;
+    margin-bottom: 6px;
+  }
+  .hot-stat {
+    font-size: 11px;
+    color: var(--stone);
+    line-height: 1.6;
+  }
+  .hot-stat strong { color: var(--fern); font-weight: 500; }
+
+  /* ── HATCH PILLS ── */
+  .hatch-scroll {
+    display: flex;
+    gap: 7px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    margin-bottom: 18px;
+    scrollbar-width: none;
+  }
+  .hatch-scroll::-webkit-scrollbar { display: none; }
+  .hatch-pill {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: #fff8f0;
+    border: 1px solid rgba(201,132,58,0.25);
+    border-radius: 20px;
+    padding: 6px 12px;
+    font-size: 12px;
+    color: var(--amber);
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s;
+    white-space: nowrap;
+  }
+  .hatch-pill:active { background: #f5ede0; }
+  .hatch-pill.active {
+    background: var(--amber);
+    color: white;
+    border-color: var(--amber);
+  }
+  .hatch-count {
+    background: rgba(201,132,58,0.15);
+    border-radius: 10px;
+    padding: 1px 6px;
+    font-size: 10px;
+  }
+  .hatch-pill.active .hatch-count {
+    background: rgba(255,255,255,0.25);
+  }
+
+  /* ── RIVER CARDS ── */
+  .river-list { display: flex; flex-direction: column; gap: 10px; }
+  .river-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.15s;
+    animation: fadeIn 0.3s ease both;
+  }
+  .river-card:active { transform: scale(0.99); }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .river-card-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: 14px 14px 10px;
+  }
+  .river-name {
+    font-family: var(--font-serif);
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--forest);
+    margin-bottom: 3px;
+  }
+  .river-meta {
+    font-size: 12px;
+    color: var(--stone);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .river-meta span { display: flex; align-items: center; gap: 3px; }
+  .river-badge {
+    font-size: 11px;
+    font-weight: 500;
+    padding: 3px 9px;
+    border-radius: 10px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .badge-hot   { background: #fff3e0; color: #c9843a; border: 1px solid rgba(201,132,58,0.25); }
+  .badge-fresh { background: #e8f4e5; color: #3d6b36; border: 1px solid rgba(61,107,54,0.2); }
+  .badge-cold  { background: #e3eef7; color: #2a4a5e; border: 1px solid rgba(42,74,94,0.2); }
+
+  .river-conditions {
+    display: flex;
+    gap: 0;
+    border-top: 1px solid var(--border);
+    background: var(--parchment);
+  }
+  .cond-cell {
+    flex: 1;
+    padding: 8px 10px;
+    text-align: center;
+    border-right: 1px solid var(--border);
+  }
+  .cond-cell:last-child { border-right: none; }
+  .cond-val {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--ink);
+    line-height: 1;
+    margin-bottom: 3px;
+  }
+  .cond-key {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--stone);
+  }
+
+  .river-hatches {
+    padding: 8px 14px 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    border-top: 1px solid var(--border);
+  }
+  .mini-hatch {
+    font-size: 11px;
+    background: #fff8f0;
+    border: 1px solid rgba(201,132,58,0.2);
+    border-radius: 10px;
+    padding: 2px 8px;
+    color: var(--amber);
+  }
+  .mini-fly {
+    font-size: 11px;
+    background: var(--parchment);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 2px 8px;
+    color: var(--stone);
+  }
+
+  .river-footer {
+    padding: 6px 14px 10px;
+    font-size: 11px;
+    color: var(--stone);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .report-count {
+    font-weight: 500;
+    color: var(--fern);
+  }
+
+  /* ── EMPTY / LOADING ── */
+  .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--stone);
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+  .empty-state h3 {
+    font-family: var(--font-serif);
+    font-size: 17px;
+    color: var(--forest);
+    margin-bottom: 6px;
+  }
+  .empty-state p { font-size: 13px; line-height: 1.6; }
+  .loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 36px;
+    gap: 10px;
+    color: var(--stone);
+    font-size: 13px;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+  .spinner {
+    width: 26px; height: 26px;
+    border: 2px solid var(--border);
+    border-top-color: var(--fern);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── REGION SHEET ── */
+  .sheet-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 200;
+    display: flex;
+    align-items: flex-end;
+  }
+  .sheet {
+    background: var(--card-bg);
+    border-radius: 20px 20px 0 0;
+    padding: 20px 20px 40px;
+    width: 100%;
+    max-height: 75vh;
+    overflow-y: auto;
+  }
+  .sheet h3 {
+    font-family: var(--font-serif);
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--forest);
+    margin-bottom: 16px;
+  }
+  .sheet-option {
+    padding: 13px 4px;
+    border-bottom: 1px solid var(--border);
+    font-size: 15px;
+    cursor: pointer;
+    color: var(--ink);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: color 0.15s;
+  }
+  .sheet-option:last-child { border-bottom: none; }
+  .sheet-option.selected { color: var(--fern); font-weight: 500; }
+  .sheet-option:active { color: var(--fern); }
+
+  /* ── NAV BAR ── */
+  .nav-bar {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: var(--card-bg);
+    border-top: 1px solid var(--border);
+    display: flex;
+    padding: 10px 0 max(10px, env(safe-area-inset-bottom));
+    z-index: 100;
+    box-shadow: 0 -4px 20px rgba(26,46,26,0.08);
+  }
+  .nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--stone);
+    text-decoration: none;
+    cursor: pointer;
+    transition: color 0.15s;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .nav-item.active { color: var(--fern); }
+  .nav-log {
+    width: 44px; height: 44px;
+    background: var(--forest);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin-top: -20px;
+    box-shadow: 0 4px 14px rgba(26,46,26,0.35);
+    border: 3px solid var(--cream);
+  }
+
+  /* Leaflet marker overrides */
+  .river-marker {
+    background: var(--fern);
+    border: 2px solid white;
+    border-radius: 50%;
+    width: 12px; height: 12px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+  }
+  .river-marker.hot { background: var(--amber); }
+  .leaflet-popup-content-wrapper {
+    border-radius: 10px !important;
+    font-family: var(--font-sans) !important;
+    font-size: 13px !important;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15) !important;
+  }
+  .leaflet-popup-content { margin: 10px 14px !important; }
+  .popup-river { font-family: var(--font-serif); font-size: 14px; font-weight: 600; color: var(--forest); margin-bottom: 4px; }
+  .popup-detail { font-size: 12px; color: var(--stone); line-height: 1.7; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-inner">
+    <div class="header-eyebrow">Catskill Fly</div>
+    <h1>Discover Waters</h1>
+    <div class="location-bar">
+      <div class="loc-pill" id="loc-pill" onclick="useGPS()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        <span id="loc-text">Use my location</span>
+      </div>
+      <button class="region-btn" onclick="showRegionSheet()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        <span id="region-label">By region</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE BODY -->
+<div class="page-body">
+
+  <!-- MAP -->
+  <div class="map-card">
+    <div id="map"></div>
+    <div class="map-legend">
+      <div class="legend-item">
+        <div class="legend-dot" style="background:var(--fern)"></div>
+        Recent report
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot" style="background:var(--amber)"></div>
+        Fishing well
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot" style="background:var(--current)"></div>
+        Your location
+      </div>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-num" id="stat-waters">—</div>
+      <div class="stat-label">Waters</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="stat-reports">—</div>
+      <div class="stat-label">Reports</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="stat-week">—</div>
+      <div class="stat-label">This week</div>
+    </div>
+  </div>
+
+  <!-- HOT THIS WEEK -->
+  <div class="section-heading">
+    <h2>🔥 Fishing well this week</h2>
+  </div>
+  <div class="hot-scroll" id="hot-scroll">
+    <div class="loading" style="width:100%;border:none;padding:20px"><div class="spinner"></div></div>
+  </div>
+
+  <!-- HATCHES ACTIVE -->
+  <div class="section-heading">
+    <h2>Hatches active</h2>
+    <span id="hatch-filter-label" style="cursor:pointer;color:var(--amber)" onclick="clearHatchFilter()"></span>
+  </div>
+  <div class="hatch-scroll" id="hatch-scroll">
+    <div style="font-size:13px;color:var(--stone);padding:4px 0">Loading…</div>
+  </div>
+
+  <!-- RIVER LIST -->
+  <div class="search-wrap">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input class="search-input" type="text" placeholder="Search rivers, regions…" oninput="filterRivers(this.value)">
+  </div>
+
+  <div class="section-heading">
+    <h2>All waters</h2>
+    <span id="river-count">Loading…</span>
+  </div>
+  <div class="river-list" id="river-list">
+    <div class="loading"><div class="spinner"></div>Scouting the water…</div>
+  </div>
+
+</div>
+
+<!-- REGION SHEET -->
+<div class="sheet-overlay" id="region-sheet" style="display:none" onclick="hideRegionSheet(event)">
+  <div class="sheet">
+    <h3>Choose a region</h3>
+    <div id="region-options"></div>
+  </div>
+</div>
+
+<!-- NAV BAR -->
+<nav class="nav-bar">
+  <a class="nav-item" href="index.html" style="text-decoration:none">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    Feed
+  </a>
+  <div class="nav-item active">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    Discover
+  </div>
+  <a class="nav-item" href="fishing-log.html" style="text-decoration:none">
+    <div class="nav-log">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    </div>
+    Log
+  </a>
+  <div class="nav-item">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+    Map
+  </div>
+  <a class="nav-item" href="index.html" style="text-decoration:none">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    Profile
+  </a>
+</nav>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const SUPABASE_URL = 'https://csdahuhrsxeumqmjsidw.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_gWCvq372JoF8aoUQIcz-zw_eLV_NoDc';
+
+let allLogs       = [];
+let riverMap      = {};   // river name → aggregated data
+let userLat       = null;
+let userLng       = null;
+let activeHatch   = null;
+let activeRegion  = null;
+let searchTerm    = '';
+let map;
+let userMarker;
+
+// ── REGIONS (US states + common fishing regions) ──
+const REGIONS = [
+  'All regions',
+  'Catskills, NY', 'Adirondacks, NY', 'New England',
+  'Pennsylvania', 'New Jersey', 'Virginia / West Virginia',
+  'Colorado', 'Montana', 'Idaho', 'Wyoming',
+  'Pacific Northwest', 'California', 'Midwest', 'Southeast'
+];
+
+// ── INIT MAP ──
+function initMap() {
+  map = L.map('map', { zoomControl: false, attributionControl: false })
+    .setView([42.0, -74.5], 8);
+
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    maxZoom: 18
+  }).addTo(map);
+
+  L.control.zoom({ position: 'bottomright' }).addTo(map);
+}
+
+// ── FETCH DATA ──
+async function fetchData() {
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/trip_logs?select=*&order=trip_date.desc&limit=500`,
+      { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } }
+    );
+    allLogs = await res.json();
+    aggregateRivers();
+    renderAll();
+  } catch (e) {
+    document.getElementById('river-list').innerHTML =
+      `<div class="empty-state"><h3>Couldn't load data</h3><p>Check your connection and refresh.</p></div>`;
+    console.error(e);
+  }
+}
+
+// ── AGGREGATE by river ──
+function aggregateRivers() {
+  riverMap = {};
+  const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0];
+
+  allLogs.forEach(log => {
+    const name = log.river || 'Unknown';
+    if (!riverMap[name]) {
+      riverMap[name] = {
+        name,
+        reports: 0,
+        reportsThisWeek: 0,
+        totalFish: 0,
+        lastDate: null,
+        lastFlow: null,
+        lastWaterTemp: null,
+        lastAirTemp: null,
+        lastTempUnit: 'F',
+        hatches: {},
+        flies: {},
+        methods: {},
+        lat: log.latitude,
+        lng: log.longitude,
+        region: guessRegion(log.latitude, log.longitude),
+        ratings: []
+      };
+    }
+    const r = riverMap[name];
+    r.reports++;
+    if (log.trip_date >= weekAgo) r.reportsThisWeek++;
+    if (!r.lastDate || log.trip_date > r.lastDate) {
+      r.lastDate    = log.trip_date;
+      r.lastFlow    = log.flow_cfs;
+      r.lastWaterTemp = log.water_temp;
+      r.lastAirTemp = log.air_temp;
+      r.lastTempUnit = log.temp_unit || 'F';
+      if (log.latitude)  r.lat = log.latitude;
+      if (log.longitude) r.lng = log.longitude;
+    }
+    if (log.fish_counts) {
+      Object.values(log.fish_counts).forEach(v => r.totalFish += parseInt(v) || 0);
+    }
+    (log.hatches || []).forEach(h => { r.hatches[h] = (r.hatches[h] || 0) + 1; });
+    (log.flies_used || []).forEach(f => {
+      if (f.pattern) r.flies[f.pattern] = (r.flies[f.pattern] || 0) + 1;
+    });
+    if (log.fishing_method) r.methods[log.fishing_method] = (r.methods[log.fishing_method] || 0) + 1;
+    if (log.rating) r.ratings.push(log.rating);
+  });
+}
+
+function guessRegion(lat, lng) {
+  if (!lat || !lng) return null;
+  if (lat > 41 && lat < 43 && lng > -75 && lng < -73) return 'Catskills, NY';
+  if (lat > 43 && lng > -75 && lng < -73) return 'Adirondacks, NY';
+  if (lat > 39 && lat < 42 && lng > -80 && lng < -74) return 'Pennsylvania';
+  if (lat > 44 && lng < -68) return 'New England';
+  if (lat > 44 && lat < 49 && lng > -117 && lng < -104) return 'Montana';
+  if (lat > 36 && lat < 41 && lng > -109 && lng < -102) return 'Colorado';
+  return null;
+}
+
+// ── RENDER ALL ──
+function renderAll() {
+  renderStats();
+  renderHotCards();
+  renderHatches();
+  renderRiverList();
+  renderMapMarkers();
+}
+
+function renderStats() {
+  const rivers  = Object.keys(riverMap).length;
+  const total   = allLogs.length;
+  const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0];
+  const week    = allLogs.filter(l => l.trip_date >= weekAgo).length;
+  document.getElementById('stat-waters').textContent  = rivers || '—';
+  document.getElementById('stat-reports').textContent = total  || '—';
+  document.getElementById('stat-week').textContent    = week   || '—';
+}
+
+// ── HOT CARDS ──
+function renderHotCards() {
+  const sorted = Object.values(riverMap)
+    .filter(r => r.reportsThisWeek > 0)
+    .sort((a, b) => b.reportsThisWeek - a.reportsThisWeek)
+    .slice(0, 8);
+
+  const el = document.getElementById('hot-scroll');
+  if (!sorted.length) {
+    el.innerHTML = `<div style="font-size:13px;color:var(--stone);padding:4px 0">No reports this week yet — be the first!</div>`;
+    return;
+  }
+  el.innerHTML = sorted.map(r => {
+    const topHatch = Object.entries(r.hatches).sort((a,b)=>b[1]-a[1])[0]?.[0] || null;
+    const topFly   = Object.entries(r.flies).sort((a,b)=>b[1]-a[1])[0]?.[0] || null;
+    const avgRating = r.ratings.length ? (r.ratings.reduce((a,b)=>a+b,0)/r.ratings.length).toFixed(1) : null;
+    return `
+      <div class="hot-card" onclick="scrollToRiver('${r.name.replace(/'/g,"\\'")}')">
+        <div class="hot-badge">🔥 ${r.reportsThisWeek} report${r.reportsThisWeek>1?'s':''} this week</div>
+        <div class="hot-river">${r.name}</div>
+        <div class="hot-stat">
+          ${r.totalFish ? `<strong>${r.totalFish}</strong> fish reported<br>` : ''}
+          ${topHatch ? `Hatch: <strong>${topHatch}</strong><br>` : ''}
+          ${topFly   ? `Fly: <strong>${topFly}</strong><br>` : ''}
+          ${avgRating ? `★ ${avgRating}` : ''}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ── HATCH PILLS ──
+function renderHatches() {
+  const hatchTotals = {};
+  allLogs.forEach(log => {
+    (log.hatches || []).forEach(h => { hatchTotals[h] = (hatchTotals[h] || 0) + 1; });
+  });
+  const sorted = Object.entries(hatchTotals).sort((a,b) => b[1]-a[1]);
+  const el = document.getElementById('hatch-scroll');
+  if (!sorted.length) {
+    el.innerHTML = `<div style="font-size:13px;color:var(--stone)">No hatches reported yet</div>`;
+    return;
+  }
+  el.innerHTML = sorted.map(([h, count]) => `
+    <div class="hatch-pill ${activeHatch===h?'active':''}" onclick="filterByHatch('${h}')">
+      ${h} <span class="hatch-count">${count}</span>
+    </div>`).join('');
+}
+
+function filterByHatch(h) {
+  activeHatch = activeHatch === h ? null : h;
+  document.getElementById('hatch-filter-label').textContent = activeHatch ? `Clear filter` : '';
+  renderHatches();
+  renderRiverList();
+}
+function clearHatchFilter() { filterByHatch(activeHatch); }
+
+// ── RIVER LIST ──
+function getFilteredRivers() {
+  let rivers = Object.values(riverMap);
+
+  if (activeHatch) {
+    rivers = rivers.filter(r => r.hatches[activeHatch]);
+  }
+  if (activeRegion && activeRegion !== 'All regions') {
+    rivers = rivers.filter(r => r.region === activeRegion);
+  }
+  if (searchTerm) {
+    rivers = rivers.filter(r =>
+      r.name.toLowerCase().includes(searchTerm) ||
+      (r.region || '').toLowerCase().includes(searchTerm)
+    );
+  }
+  if (userLat && userLng) {
+    rivers.forEach(r => {
+      r._dist = r.lat && r.lng
+        ? Math.sqrt(Math.pow(r.lat - userLat, 2) + Math.pow(r.lng - userLng, 2))
+        : 999;
+    });
+    rivers.sort((a, b) => a._dist - b._dist);
+  } else {
+    rivers.sort((a, b) => b.reports - a.reports);
+  }
+  return rivers;
+}
+
+function renderRiverList() {
+  const rivers = getFilteredRivers();
+  const el = document.getElementById('river-list');
+  document.getElementById('river-count').textContent =
+    `${rivers.length} water${rivers.length !== 1 ? 's' : ''}`;
+
+  if (!rivers.length) {
+    el.innerHTML = `<div class="empty-state"><h3>No waters found</h3><p>Try a different filter or be the first to log a trip here.</p></div>`;
+    return;
+  }
+
+  const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0];
+
+  el.innerHTML = rivers.map((r, i) => {
+    const topHatches = Object.entries(r.hatches).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([h])=>h);
+    const topFlies   = Object.entries(r.flies).sort((a,b)=>b[1]-a[1]).slice(0,2).map(([f])=>f);
+    const topMethod  = Object.entries(r.methods).sort((a,b)=>b[1]-a[1])[0]?.[0] || null;
+
+    const badge = r.reportsThisWeek >= 2
+      ? `<span class="river-badge badge-hot">🔥 Hot</span>`
+      : r.lastDate >= weekAgo
+      ? `<span class="river-badge badge-fresh">New report</span>`
+      : '';
+
+    const distText = r._dist && r._dist < 999
+      ? `~${Math.round(r._dist * 69)} mi away`
+      : r.region || '';
+
+    const dateText = r.lastDate
+      ? new Date(r.lastDate + 'T12:00:00').toLocaleDateString('en-US', { month:'short', day:'numeric' })
+      : '—';
+
+    return `
+      <div class="river-card" style="animation-delay:${i*0.04}s" onclick="goToRiverFeed('${r.name.replace(/'/g,"\\'")}')">
+        <div class="river-card-top">
+          <div>
+            <div class="river-name">${r.name}</div>
+            <div class="river-meta">
+              <span>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/></svg>
+                ${distText}
+              </span>
+              <span>${r.reports} report${r.reports!==1?'s':''}</span>
+              ${topMethod ? `<span>${topMethod}</span>` : ''}
+            </div>
+          </div>
+          ${badge}
+        </div>
+        <div class="river-conditions">
+          <div class="cond-cell">
+            <div class="cond-val">${r.lastFlow ? Math.round(r.lastFlow) + ' cfs' : '—'}</div>
+            <div class="cond-key">Flow</div>
+          </div>
+          <div class="cond-cell">
+            <div class="cond-val">${r.lastWaterTemp ? Math.round(r.lastWaterTemp) + '°' + r.lastTempUnit : '—'}</div>
+            <div class="cond-key">Water</div>
+          </div>
+          <div class="cond-cell">
+            <div class="cond-val">${r.lastAirTemp ? Math.round(r.lastAirTemp) + '°' + r.lastTempUnit : '—'}</div>
+            <div class="cond-key">Air</div>
+          </div>
+          <div class="cond-cell">
+            <div class="cond-val">${dateText}</div>
+            <div class="cond-key">Last report</div>
+          </div>
+        </div>
+        ${topHatches.length || topFlies.length ? `
+        <div class="river-hatches">
+          ${topHatches.map(h => `<span class="mini-hatch">${h}</span>`).join('')}
+          ${topFlies.map(f => `<span class="mini-fly">${f}</span>`).join('')}
+        </div>` : ''}
+      </div>`;
+  }).join('');
+}
+
+function filterRivers(val) {
+  searchTerm = val.toLowerCase();
+  renderRiverList();
+}
+
+function scrollToRiver(name) {
+  const cards = document.querySelectorAll('.river-card');
+  cards.forEach(card => {
+    if (card.querySelector('.river-name')?.textContent === name) {
+      card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      card.style.boxShadow = '0 0 0 2px var(--fern)';
+      setTimeout(() => card.style.boxShadow = '', 1500);
+    }
+  });
+}
+
+function goToRiverFeed(name) {
+  window.location.href = `index.html?river=${encodeURIComponent(name)}`;
+}
+
+// ── MAP MARKERS ──
+function renderMapMarkers() {
+  if (!map) return;
+  const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0];
+
+  Object.values(riverMap).forEach(r => {
+    if (!r.lat || !r.lng) return;
+    const isHot = r.reportsThisWeek >= 2;
+    const color = isHot ? '#c9843a' : '#3d6b36';
+    const size  = isHot ? 14 : 10;
+
+    const icon = L.divIcon({
+      className: '',
+      html: `<div style="
+        width:${size}px;height:${size}px;
+        background:${color};
+        border:2px solid white;
+        border-radius:50%;
+        box-shadow:0 1px 4px rgba(0,0,0,0.3)">
+      </div>`,
+      iconSize: [size, size],
+      iconAnchor: [size/2, size/2]
+    });
+
+    const topHatch = Object.entries(r.hatches).sort((a,b)=>b[1]-a[1])[0]?.[0] || '—';
+    const marker = L.marker([r.lat, r.lng], { icon }).addTo(map);
+    marker.bindPopup(`
+      <div class="popup-river">${r.name}</div>
+      <div class="popup-detail">
+        ${r.reports} report${r.reports!==1?'s':''}<br>
+        ${r.lastFlow ? 'Flow: ' + Math.round(r.lastFlow) + ' cfs<br>' : ''}
+        ${r.lastWaterTemp ? 'Water: ' + Math.round(r.lastWaterTemp) + '°' + r.lastTempUnit + '<br>' : ''}
+        Hatch: ${topHatch}
+      </div>`);
+  });
+}
+
+// ── GPS ──
+function useGPS() {
+  const el = document.getElementById('loc-text');
+  el.textContent = 'Finding you…';
+  if (!navigator.geolocation) { el.textContent = 'Not available'; return; }
+  navigator.geolocation.getCurrentPosition(pos => {
+    userLat = pos.coords.latitude;
+    userLng = pos.coords.longitude;
+    el.textContent = 'Near you';
+
+    // Blue user dot on map
+    if (userMarker) map.removeLayer(userMarker);
+    userMarker = L.circleMarker([userLat, userLng], {
+      radius: 7,
+      fillColor: '#3d7a9c',
+      color: 'white',
+      weight: 2,
+      fillOpacity: 1
+    }).addTo(map);
+    map.setView([userLat, userLng], 10);
+    renderRiverList();
+  }, () => { el.textContent = 'Use my location'; });
+}
+
+// ── REGION SHEET ──
+function showRegionSheet() {
+  const el = document.getElementById('region-options');
+  el.innerHTML = REGIONS.map(r => `
+    <div class="sheet-option ${activeRegion===r||(!activeRegion&&r==='All regions')?'selected':''}"
+      onclick="selectRegion('${r}')">
+      ${r}
+      ${activeRegion===r||(!activeRegion&&r==='All regions') ? '<span>✓</span>' : ''}
+    </div>`).join('');
+  document.getElementById('region-sheet').style.display = 'flex';
+}
+function hideRegionSheet(e) {
+  if (e.target === document.getElementById('region-sheet'))
+    document.getElementById('region-sheet').style.display = 'none';
+}
+function selectRegion(r) {
+  activeRegion = r === 'All regions' ? null : r;
+  document.getElementById('region-label').textContent = activeRegion || 'By region';
+  document.getElementById('region-sheet').style.display = 'none';
+  renderRiverList();
+  if (activeRegion) {
+    const rivers = getFilteredRivers().filter(rv => rv.lat && rv.lng);
+    if (rivers.length) {
+      const lats = rivers.map(rv => rv.lat);
+      const lngs = rivers.map(rv => rv.lng);
+      map.fitBounds([
+        [Math.min(...lats)-0.5, Math.min(...lngs)-0.5],
+        [Math.max(...lats)+0.5, Math.max(...lngs)+0.5]
+      ]);
+    }
+  }
+}
+
+// ── INIT ──
+initMap();
+fetchData();
+</script>
+</body>
+</html>

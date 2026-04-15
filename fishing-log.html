@@ -502,6 +502,71 @@
   }
   @keyframes spin { to { transform: rotate(360deg); } }
 
+  /* ── MAP PICKER SHEET ── */
+  .map-sheet-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 300;
+    display: flex; align-items: flex-end;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.25s;
+  }
+  .map-sheet-overlay.open { opacity: 1; pointer-events: all; }
+  .map-sheet {
+    background: var(--cream);
+    border-radius: 20px 20px 0 0;
+    width: 100%;
+    height: 88vh;
+    display: flex; flex-direction: column;
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(0.32,0.72,0,1);
+  }
+  .map-sheet-overlay.open .map-sheet { transform: translateY(0); }
+  .map-sheet-handle {
+    display: flex; justify-content: center;
+    padding: 10px 0 6px; flex-shrink: 0;
+  }
+  .map-sheet-handle div { width: 36px; height: 4px; background: var(--border); border-radius: 2px; }
+  .map-sheet-header {
+    padding: 0 16px 12px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .map-sheet-header h3 {
+    font-family: var(--font-serif);
+    font-size: 18px; font-weight: 600;
+    color: var(--forest); margin-bottom: 4px;
+  }
+  .map-sheet-header p { font-size: 13px; color: var(--stone); }
+  #location-map { flex: 1; width: 100%; min-height: 0; }
+  .map-sheet-footer {
+    padding: 12px 16px;
+    border-top: 1px solid var(--border);
+    background: var(--cream);
+    flex-shrink: 0;
+    display: flex; gap: 10px; align-items: center;
+  }
+  .map-picked-info {
+    flex: 1; font-size: 13px; color: var(--stone); line-height: 1.4;
+  }
+  .map-picked-info strong { color: var(--forest); display: block; font-size: 14px; }
+  .map-confirm-btn {
+    padding: 11px 20px;
+    background: var(--forest); color: var(--cream);
+    font-family: var(--font-serif); font-size: 15px; font-weight: 600;
+    border: none; border-radius: 10px; cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.2s;
+  }
+  .map-confirm-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .map-confirm-btn:not(:disabled):active { background: var(--moss); }
+  .map-cancel-btn {
+    padding: 11px 16px;
+    background: transparent; color: var(--stone);
+    font-family: var(--font-sans); font-size: 14px;
+    border: 1px solid var(--border); border-radius: 10px; cursor: pointer;
+  }
+
   /* ── AUTO-FILL BANNER ── */
   .autofill-banner {
     background: linear-gradient(135deg, #e8f4e5, #e3eef7);
@@ -532,6 +597,7 @@
     flex-shrink: 0;
   }
 </style>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 </head>
 <body>
 
@@ -550,9 +616,9 @@
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
         <span id="location-text">Tap for GPS</span>
       </div>
-      <div class="meta-pill" id="conditions-pill" onclick="autoFillConditions()">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9z"/></svg>
-        <span>Auto-fill</span>
+      <div class="meta-pill" onclick="openMapPicker()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3l18 18M10.5 10.677a2 2 0 1 0 2.823 2.823"/><path d="M7.362 7.561C5.68 8.862 4.279 10.138 3 11.5 6.667 15.833 10.556 18 12 18s5.333-2.167 9-6.5c-1.516-1.687-3.069-3.05-4.638-4.094"/><path d="M12 6c.666 0 1.363.107 2.08.329"/></svg>
+        <span>Pick on map</span>
       </div>
     </div>
   </div>
@@ -580,6 +646,16 @@
     <div class="section-body">
       <label>River or body of water</label>
       <input type="text" id="river" placeholder="e.g. Delaware River — Upper" autocomplete="off">
+
+      <button type="button" onclick="openMapPicker()" style="
+        width:100%; margin-top:8px; padding:9px 14px;
+        background:transparent; border:1.5px dashed var(--border);
+        border-radius:10px; font-family:var(--font-sans); font-size:13px;
+        color:var(--fern); cursor:pointer; display:flex; align-items:center;
+        justify-content:center; gap:6px; transition:background 0.2s;">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        Not on the water? Pick location on map
+      </button>
 
       <label>Access point / section</label>
       <input type="text" id="section" placeholder="e.g. Buckingham Pool, mile marker 12">
@@ -897,6 +973,26 @@
 </div>
 </div>
 
+<!-- MAP PICKER SHEET -->
+<div class="map-sheet-overlay" id="map-sheet-overlay">
+  <div class="map-sheet">
+    <div class="map-sheet-handle"><div></div></div>
+    <div class="map-sheet-header">
+      <h3>Pick a location</h3>
+      <p>Tap the map to set your fishing spot. Drag to refine.</p>
+    </div>
+    <div id="location-map"></div>
+    <div class="map-sheet-footer">
+      <div class="map-picked-info" id="map-picked-info">
+        <strong>No location selected</strong>
+        Tap anywhere on the map
+      </div>
+      <button class="map-cancel-btn" onclick="closeMapPicker()">Cancel</button>
+      <button class="map-confirm-btn" id="map-confirm-btn" onclick="confirmMapLocation()" disabled>Use this spot</button>
+    </div>
+  </div>
+</div>
+
 <!-- NAV BAR -->
 <nav class="nav-bar">
   <a class="nav-item" href="index.html" style="text-decoration:none">
@@ -1148,7 +1244,7 @@ function getLocation() {
   }, () => { el.textContent = 'Tap for GPS'; });
 }
 
-// Auto-fill — show banner
+// Auto-fill — show banner (called after GPS or map pick sets coordinates)
 function autoFillConditions() {
   document.getElementById('autofill-banner').style.display = 'flex';
 }
@@ -1498,6 +1594,127 @@ async function submitLog() {
       btn.style.background = 'var(--forest)';
     }, 3000);
   }
+}
+</script>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+// ── MAP PICKER ──
+let pickerMap     = null;
+let pickerMarker  = null;
+let pickedLat     = null;
+let pickedLng     = null;
+
+function openMapPicker() {
+  document.getElementById('map-sheet-overlay').classList.add('open');
+
+  // Init map on first open
+  setTimeout(() => {
+    if (!pickerMap) {
+      const startLat = window._lat || 42.0;
+      const startLng = window._lng || -74.5;
+
+      pickerMap = L.map('location-map', { zoomControl: true, attributionControl: false })
+        .setView([startLat, startLng], window._lat ? 12 : 7);
+
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+        maxZoom: 18
+      }).addTo(pickerMap);
+
+      // Tap to place marker
+      pickerMap.on('click', e => {
+        pickedLat = e.latlng.lat;
+        pickedLng = e.latlng.lng;
+
+        if (pickerMarker) {
+          pickerMarker.setLatLng(e.latlng);
+        } else {
+          pickerMarker = L.marker(e.latlng, { draggable: true }).addTo(pickerMap);
+          pickerMarker.on('dragend', e => {
+            pickedLat = e.target.getLatLng().lat;
+            pickedLng = e.target.getLatLng().lng;
+            reverseGeocode(pickedLat, pickedLng);
+          });
+        }
+        reverseGeocode(pickedLat, pickedLng);
+      });
+    } else {
+      pickerMap.invalidateSize();
+    }
+
+    // If GPS already set, show it
+    if (window._lat && window._lng && !pickerMarker) {
+      pickerMarker = L.marker([window._lat, window._lng], { draggable: true }).addTo(pickerMap);
+      pickerMarker.on('dragend', e => {
+        pickedLat = e.target.getLatLng().lat;
+        pickedLng = e.target.getLatLng().lng;
+        reverseGeocode(pickedLat, pickedLng);
+      });
+      pickedLat = window._lat;
+      pickedLng = window._lng;
+      reverseGeocode(pickedLat, pickedLng);
+    }
+  }, 100);
+}
+
+function closeMapPicker() {
+  document.getElementById('map-sheet-overlay').classList.remove('open');
+}
+
+async function reverseGeocode(lat, lng) {
+  document.getElementById('map-confirm-btn').disabled = false;
+  document.getElementById('map-picked-info').innerHTML =
+    `<strong>${lat.toFixed(5)}, ${lng.toFixed(5)}</strong>Looking up location…`;
+
+  try {
+    const res  = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`
+    );
+    const data = await res.json();
+    const addr = data.address || {};
+
+    // Build a readable place name
+    const water  = addr.water || addr.river || addr.stream || null;
+    const place  = addr.hamlet || addr.village || addr.town || addr.city || addr.county || '';
+    const state  = addr.state || '';
+    const label  = [water, place, state].filter(Boolean).join(', ') || `${lat.toFixed(4)}° N, ${lng.toFixed(4)}° W`;
+
+    document.getElementById('map-picked-info').innerHTML =
+      `<strong>${label}</strong>${lat.toFixed(4)}° N, ${Math.abs(lng).toFixed(4)}° W`;
+
+    // Store for confirm
+    window._pickedLabel = water || place || label;
+  } catch(e) {
+    document.getElementById('map-picked-info').innerHTML =
+      `<strong>${lat.toFixed(4)}° N, ${Math.abs(lng).toFixed(4)}° W</strong>Tap "Use this spot" to confirm`;
+  }
+}
+
+function confirmMapLocation() {
+  if (!pickedLat || !pickedLng) return;
+
+  // Set coordinates
+  window._lat = pickedLat;
+  window._lng = pickedLng;
+
+  // Update GPS pill
+  document.getElementById('location-text').textContent =
+    `${pickedLat.toFixed(4)}° N`;
+
+  // Pre-fill river name if empty and we got a water name
+  const riverInput = document.getElementById('river');
+  if (!riverInput.value && window._pickedLabel) {
+    riverInput.value = window._pickedLabel;
+  }
+
+  closeMapPicker();
+
+  // Trigger USGS + weather autofill for the picked location
+  setTimeout(() => {
+    document.getElementById('autofill-banner').style.display = 'flex';
+    document.getElementById('autofill-banner').querySelector('span').textContent =
+      'USGS & weather data ready for picked location';
+  }, 300);
 }
 </script>
 </body>

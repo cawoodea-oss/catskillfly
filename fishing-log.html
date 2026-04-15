@@ -987,19 +987,172 @@ function getLocation() {
   }, () => { el.textContent = 'Tap for GPS'; });
 }
 
-// Auto-fill simulation
+// Auto-fill — show banner
 function autoFillConditions() {
   document.getElementById('autofill-banner').style.display = 'flex';
 }
-function doAutofill() {
-  document.getElementById('air-temp').value = '68';
-  document.getElementById('water-temp').value = '54';
-  document.getElementById('flow').value = '412';
-  document.getElementById('autofill-banner').style.display = 'none';
-  // Flash the conditions section
+
+// Auto-fill — real USGS + Open-Meteo data
+async function doAutofill() {
+  const btn = document.querySelector('.autofill-btn');
+  const banner = document.getElementById('autofill-banner');
+  const lat = window._lat;
+  const lng = window._lng;
+
+  if (!lat || !lng) {
+    banner.querySelector('span').textContent = 'GPS needed — tap the location pill first';
+    return;
+  }
+
+  btn.textContent = 'Loading…';
+  btn.disabled = true;
+
+  let filled = [];
+
+  // ── 1. Open-Meteo: air temp + weather condition (free, no key) ──
+  try {
+    const weatherRes = await fetch(
+      `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}` +
+      `&current=temperature_2m,weathercode,windspeed_10m&temperature_unit=fahrenheit&windspeed_unit=mph&timezone=auto`
+    );
+    const weather = await weatherRes.json();
+    const current = weather.current;
+
+    if (current) {
+      // Air temp
+      const airTemp = Math.round(current.temperature_2m);
+      document.getElementById('air-temp').value = airTemp;
+      filled.push(`Air ${airTemp}°F`);
+
+      // Wind
+      const windMph = current.windspeed_10m;
+      let windLabel = 'Calm';
+      if (windMph > 20)     windLabel = 'Very windy';
+      else if (windMph > 12) windLabel = 'Strong';
+      else if (windMph > 7)  windLabel = 'Moderate';
+      else if (windMph > 2)  windLabel = 'Light';
+      document.getElementById('wind-val').textContent = windLabel;
+      const windRange = document.getElementById('wind-range');
+      const windIdx = ['Calm','Light','Moderate','Strong','Very windy'].indexOf(windLabel);
+      windRange.value = windIdx;
+      windRange.style.setProperty('--val', (windIdx / 4 * 100) + '%');
+      filled.push(windLabel + ' wind');
+
+      // Sky condition from WMO weather code
+      const code = current.weathercode;
+      let skyChip = null;
+      if (code === 0)                        skyChip = '☀️ Sunny';
+      else if (code <= 2)                    skyChip = '⛅ Partly cloudy';
+      else if (code === 3)                   skyChip = '☁️ Overcast';
+      else if (code >= 45 && code <= 48)     skyChip = '🌫️ Fog';
+      else if (code >= 51 && code <= 67)     skyChip = '🌧️ Rain';
+      else if (code >= 80 && code <= 82)     skyChip = '🌧️ Rain';
+      if (skyChip) {
+        document.querySelectorAll('#sky-chips .chip').forEach(c => {
+          if (c.textContent.trim() === skyChip) {
+            c.classList.add('active');
+            filled.push(skyChip.split(' ').slice(1).join(' '));
+          }
+        });
+      }
+    }
+  } catch (e) {
+    console.warn('Weather fetch failed:', e);
+  }
+
+  // ── 2. USGS: nearest stream gauge — flow (cfs) + water temp ──
+  try {
+    // Find sites within ~0.5 degree radius with streamflow data
+    const usgsRes = await fetch(
+      `https://waterservices.usgs.gov/nwis/iv/?format=json` +
+      `&bBox=${(lng-0.5).toFixed(4)},${(lat-0.5).toFixed(4)},${(lng+0.5).toFixed(4)},${(lat+0.5).toFixed(4)}` +
+      `&parameterCd=00060,00010&siteStatus=active&siteType=ST`
+    );
+    const usgs = await usgsRes.json();
+    const timeSeries = usgs?.value?.timeSeries || [];
+
+    // Find closest gauge by coordinates
+    let closestFlow   = null;
+    let closestTemp   = null;
+    let closestDist   = Infinity;
+    let gaugeName     = null;
+
+    timeSeries.forEach(ts => {
+      const siteLat = parseFloat(ts.sourceInfo?.geoLocation?.geogLocation?.latitude);
+      const siteLng = parseFloat(ts.sourceInfo?.geoLocation?.geogLocation?.longitude);
+      if (!siteLat || !siteLng) return;
+
+      const dist = Math.sqrt(Math.pow(siteLat - lat, 2) + Math.pow(siteLng - lng, 2));
+      const paramCode = ts.variable?.variableCode?.[0]?.value;
+      const val = parseFloat(ts.values?.[0]?.value?.[0]?.value);
+      if (isNaN(val)) return;
+
+      if (dist < closestDist) {
+        closestDist = dist;
+        gaugeName = ts.sourceInfo?.siteName || null;
+      }
+
+      if (paramCode === '00060' && dist < 0.6) closestFlow = val;   // streamflow cfs
+      if (paramCode === '00010' && dist < 0.6) closestTemp = val;   // water temp °C
+    });
+
+    if (closestFlow !== null) {
+      document.getElementById('flow').value = Math.round(closestFlow);
+      filled.push(`Flow ${Math.round(closestFlow)} cfs`);
+    }
+
+    if (closestTemp !== null) {
+      // USGS returns °C — convert to °F if needed
+      const waterTempF = Math.round(closestTemp * 9/5 + 32);
+      const waterTempC = Math.round(closestTemp * 10) / 10;
+      document.getElementById('water-temp').value =
+        currentUnit === 'F' ? waterTempF : waterTempC;
+      filled.push(`Water ${currentUnit === 'F' ? waterTempF + '°F' : waterTempC + '°C'}`);
+    }
+
+    if (gaugeName) {
+      banner.querySelector('span').textContent = `Data from USGS gauge: ${gaugeName.toLowerCase().replace(/\b\w/g, l => l.toUpperCase()).substring(0, 40)}`;
+    }
+
+  } catch (e) {
+    console.warn('USGS fetch failed:', e);
+  }
+
+  // ── Done ──
+  banner.style.display = 'none';
+
+  // Flash conditions section green
   const sec = document.querySelectorAll('.section')[1];
   sec.style.boxShadow = '0 0 0 2px var(--fern)';
-  setTimeout(() => sec.style.boxShadow = '', 1000);
+  setTimeout(() => sec.style.boxShadow = '', 1500);
+
+  // Show a brief toast with what was filled
+  if (filled.length > 0) {
+    const toast = document.createElement('div');
+    toast.style.cssText = `
+      position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%);
+      background: var(--forest); color: var(--cream); padding: 10px 18px;
+      border-radius: 20px; font-size: 13px; z-index: 999;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.25); white-space: nowrap;
+      animation: slideUp 0.3s ease;`;
+    toast.textContent = '✓ Filled in: ' + filled.join(' · ');
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3500);
+  } else {
+    // No data found nearby
+    const toast = document.createElement('div');
+    toast.style.cssText = `
+      position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%);
+      background: #b44040; color: white; padding: 10px 18px;
+      border-radius: 20px; font-size: 13px; z-index: 999;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.2); white-space: nowrap;`;
+    toast.textContent = 'No USGS gauge found nearby — enter manually';
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3500);
+  }
+
+  btn.textContent = 'Fill in';
+  btn.disabled = false;
 }
 
 // ── SUPABASE CONNECTION ──

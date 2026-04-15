@@ -1577,12 +1577,16 @@ async function submitLog() {
     btn.textContent = '✓ Trip logged! Tight lines.';
     btn.style.background = 'var(--water)';
     uploadedPhotoUrls = [];
-    document.getElementById('photo-preview').innerHTML = '';
+
+    // ── Full form reset ──
     setTimeout(() => {
+      resetForm();
       btn.textContent = 'Post this trip →';
       btn.style.background = 'var(--forest)';
       btn.disabled = false;
-    }, 3000);
+      // Scroll back to top
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 2500);
 
   } catch (err) {
     console.error('Supabase error:', err);
@@ -1594,6 +1598,62 @@ async function submitLog() {
       btn.style.background = 'var(--forest)';
     }, 3000);
   }
+}
+
+// ── RESET FORM after submission ──
+function resetForm() {
+  // Text inputs & selects
+  ['river','section','start-time','end-time',
+   'air-temp','water-temp','flow',
+   'hatch-notes','fly-line','line-wt','leader',
+   'tippet','tippet-mat','fish-length','fish-weight','notes'
+  ].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+
+  // Reset date to today
+  document.getElementById('trip-date').value = new Date().toISOString().split('T')[0];
+
+  // Clear all active chips
+  document.querySelectorAll('.chip.active').forEach(c => c.classList.remove('active'));
+
+  // Reset wind slider
+  const windRange = document.getElementById('wind-range');
+  if (windRange) { windRange.value = 0; windRange.style.setProperty('--val','0%'); }
+  document.getElementById('wind-val').textContent = 'Calm';
+
+  // Clear fly list and add one blank card
+  document.getElementById('fly-list').innerHTML = '';
+  flyCount = 0;
+  addFly();
+
+  // Reset fish counters
+  fishCounts = {};
+  document.getElementById('fish-counters').innerHTML = '';
+  addSpeciesCounter('Brown trout');
+  addSpeciesCounter('Rainbow trout');
+
+  // Reset stars
+  rating = 0;
+  document.querySelectorAll('.star').forEach(s => s.classList.remove('lit'));
+
+  // Clear photos
+  document.getElementById('photo-preview').innerHTML = '';
+  document.getElementById('photo-input').value = '';
+
+  // Reset GPS
+  window._lat = null;
+  window._lng = null;
+  window._pickedLabel = null;
+  document.getElementById('location-text').textContent = 'Tap for GPS';
+
+  // Hide autofill banner
+  document.getElementById('autofill-banner').style.display = 'none';
+
+  // Reset map picker state
+  pickedLat = null;
+  pickedLng = null;
 }
 </script>
 

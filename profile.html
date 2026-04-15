@@ -426,7 +426,8 @@
     <div class="loading"><div class="spinner"></div>Loading your trips…</div>
   </div>
 
-  <button class="signout-btn" onclick="signOut()">Sign out</button>
+  <button class="signout-btn" onclick="resetPassword()">Change password</button>
+  <button class="signout-btn" onclick="signOut()" style="margin-top:6px">Sign out</button>
 
 </div>
 
@@ -443,6 +444,28 @@
       <label>Home river</label>
       <input type="text" id="edit-river" placeholder="e.g. Beaverkill">
       <button class="save-btn" onclick="saveProfile()">Save profile</button>
+    </div>
+  </div>
+</div>
+
+<!-- PASSWORD RESET SHEET -->
+<div class="sheet-overlay" id="password-overlay" onclick="closePasswordIfBg(event)">
+  <div class="edit-sheet">
+    <div class="sheet-handle"><div></div></div>
+    <h3>Change password</h3>
+    <div class="edit-body">
+      <label>New password</label>
+      <input type="password" id="new-password" placeholder="At least 6 characters" autocomplete="new-password">
+      <label>Confirm new password</label>
+      <input type="password" id="confirm-password" placeholder="Repeat new password" autocomplete="new-password">
+      <div id="password-error" style="display:none;margin-top:10px;padding:10px 12px;background:#fdf0f0;border:1px solid rgba(180,60,60,0.2);border-radius:8px;font-size:13px;color:#b44040"></div>
+      <div id="password-success" style="display:none;margin-top:10px;padding:10px 12px;background:#e8f4e5;border:1px solid rgba(61,107,54,0.2);border-radius:8px;font-size:13px;color:var(--fern)"></div>
+      <button class="save-btn" onclick="saveNewPassword()">Update password</button>
+      <div style="text-align:center;margin-top:12px">
+        <span style="font-size:13px;color:var(--stone);cursor:pointer;text-decoration:underline" onclick="sendResetEmail()">
+          Or send a reset link to my email instead
+        </span>
+      </div>
     </div>
   </div>
 </div>
@@ -675,6 +698,98 @@ async function saveProfile() {
 function signOut() {
   localStorage.removeItem('sb_session');
   window.location.href = 'login.html';
+}
+
+// ── PASSWORD RESET ──
+function resetPassword() {
+  document.getElementById('new-password').value     = '';
+  document.getElementById('confirm-password').value = '';
+  document.getElementById('password-error').style.display   = 'none';
+  document.getElementById('password-success').style.display = 'none';
+  document.getElementById('password-overlay').classList.add('open');
+}
+
+function closePasswordIfBg(e) {
+  if (e.target === document.getElementById('password-overlay'))
+    document.getElementById('password-overlay').classList.remove('open');
+}
+
+async function saveNewPassword() {
+  const newPw  = document.getElementById('new-password').value;
+  const confPw = document.getElementById('confirm-password').value;
+  const errEl  = document.getElementById('password-error');
+  const okEl   = document.getElementById('password-success');
+
+  errEl.style.display = 'none';
+  okEl.style.display  = 'none';
+
+  if (newPw.length < 6) {
+    errEl.textContent = 'Password must be at least 6 characters.';
+    errEl.style.display = 'block'; return;
+  }
+  if (newPw !== confPw) {
+    errEl.textContent = 'Passwords don\'t match — please try again.';
+    errEl.style.display = 'block'; return;
+  }
+
+  const session = await getSession();
+  if (!session) return;
+
+  const btn = document.querySelector('#password-overlay .save-btn');
+  btn.textContent = 'Updating…'; btn.disabled = true;
+
+  try {
+    const res = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type':  'application/json',
+        'apikey':        SUPABASE_KEY,
+        'Authorization': 'Bearer ' + session.access_token
+      },
+      body: JSON.stringify({ password: newPw })
+    });
+
+    if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.message || data.msg || 'Update failed');
+    }
+
+    okEl.textContent = '✓ Password updated successfully.';
+    okEl.style.display = 'block';
+    document.getElementById('new-password').value     = '';
+    document.getElementById('confirm-password').value = '';
+    setTimeout(() => {
+      document.getElementById('password-overlay').classList.remove('open');
+    }, 2000);
+
+  } catch(e) {
+    errEl.textContent = e.message;
+    errEl.style.display = 'block';
+  }
+
+  btn.textContent = 'Update password'; btn.disabled = false;
+}
+
+async function sendResetEmail() {
+  const session = await getSession();
+  const email   = session?.user?.email;
+  if (!email) return;
+
+  try {
+    await fetch(`${SUPABASE_URL}/auth/v1/recover`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY },
+      body: JSON.stringify({ email })
+    });
+    const okEl = document.getElementById('password-success');
+    okEl.textContent = `Reset link sent to ${email}`;
+    okEl.style.display = 'block';
+    document.getElementById('password-error').style.display = 'none';
+  } catch(e) {
+    const errEl = document.getElementById('password-error');
+    errEl.textContent = 'Could not send reset email. Try again.';
+    errEl.style.display = 'block';
+  }
 }
 
 init();

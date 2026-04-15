@@ -1,0 +1,38 @@
+name,type,default_value,is_nullable,is_primary_key,is_unique,comment
+id,uuid,gen_random_uuid(),false,true,true,Primary key auto-generated
+created_at,timestamptz,now(),false,false,false,Auto-set timestamp on insert
+river,text,,true,false,false,River or body of water
+section,text,,true,false,false,Access point or section name
+trip_date,date,,true,false,false,Date of the fishing trip
+start_time,time,,true,false,false,Time fishing started
+end_time,time,,true,false,false,Time fishing ended
+latitude,float8,,true,false,false,GPS latitude
+longitude,float8,,true,false,false,GPS longitude
+air_temp,numeric,,true,false,false,Air temperature
+water_temp,numeric,,true,false,false,Water temperature
+flow_cfs,numeric,,true,false,false,Water flow in cubic feet per second
+temp_unit,text,F,true,false,false,Temperature unit F or C
+sky,text[],,true,false,false,Array of sky conditions selected
+water_clarity,text,,true,false,false,Crystal clear / Slight color / Off-color / Murky
+wind,text,,true,false,false,Calm / Light / Moderate / Strong / Very windy
+barometric_pressure,text,,true,false,false,Rising / Steady / Falling
+hatches,text[],,true,false,false,Array of insects observed
+hatch_intensity,text,,true,false,false,Sparse / Moderate / Heavy / Blanket
+hatch_timing,text,,true,false,false,Morning / Midday / Afternoon / Evening
+hatch_notes,text,,true,false,false,Free text notes on hatch activity
+fly_line,text,,true,false,false,Fly line type selected
+line_weight,text,,true,false,false,Line weight 2wt through 9wt
+leader_length,text,,true,false,false,Leader length 6ft through 20ft+
+tippet_size,text,,true,false,false,Tippet size 0X through 7X
+tippet_material,text,,true,false,false,Mono / Fluorocarbon / Copolymer
+flies_used,jsonb,,true,false,false,JSON array of fly objects with name size caught and notes
+fish_counts,jsonb,,true,false,false,JSON object of species names and counts
+biggest_fish_length,numeric,,true,false,false,Longest fish in inches
+biggest_fish_weight,numeric,,true,false,false,Heaviest fish in pounds
+fishing_method,text,,true,false,false,Dry fly / Nymph / Streamer / Euro nymph / Wet fly / Skated
+trip_notes,text,,true,false,false,General free text trip notes
+rating,smallint,,true,false,false,Overall trip rating 1 to 5 stars
+visibility,text,Friends only,true,false,false,Public / Friends only / Private
+spot_precision,text,River section,true,false,false,Exact location / River section / County only
+photo_urls,text[],,true,false,false,Array of photo storage URLs
+user_id,uuid,,true,false,false,Foreign key to auth.users added when login is set up

@@ -849,7 +849,7 @@
 // SUPABASE_URL and SUPABASE_KEY defined in auth.js
 
 let allLogs       = [];
-let riverMap      = {};   // river name → aggregated data
+let riverMap      = {};
 let userLat       = null;
 let userLng       = null;
 let activeHatch   = null;
@@ -857,6 +857,7 @@ let activeRegion  = null;
 let searchTerm    = '';
 let map;
 let userMarker;
+let _prevRiverName = null;
 
 // ── REGIONS — full US states + popular fishing regions ──
 const REGIONS = [
@@ -1245,6 +1246,7 @@ function goToRiverFeed(name) {
 
 // ── RIVER REPORTS SHEET ──
 function openRiverReports(riverName) {
+  _prevRiverName = riverName;
   const river   = riverMap[riverName];
   const reports = allLogs.filter(l => l.river === riverName)
                          .sort((a,b) => b.trip_date > a.trip_date ? 1 : -1);
@@ -1305,35 +1307,43 @@ function closeRsheetIfBg(e) { if (e.target === document.getElementById('rsheet-o
 
 // ── FULL REPORT ──
 function openFullReport(id) {
+  event.stopPropagation();
   const log = allLogs.find(l => l.id === id);
-  if (!log) return;
+  if (!log) { console.warn('Log not found:', id); return; }
 
   const dateObj = log.trip_date ? new Date(log.trip_date + 'T12:00:00') : null;
   const dateStr = dateObj ? dateObj.toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'}) : '—';
   let fishTotal = 0;
   if (log.fish_counts) Object.values(log.fish_counts).forEach(v => fishTotal += parseInt(v)||0);
-  const speciesRows = log.fish_counts ? Object.entries(log.fish_counts).map(([sp,ct])=>`<tr><td>${sp}</td><td>${ct}</td></tr>`).join('') : '';
-  const flyRows = (log.flies_used||[]).map(f=>`<tr><td>${f.pattern||'—'}</td><td>${f.size||'—'}</td><td>${f.caught||'0'}</td><td>${f.notes||''}</td></tr>`).join('');
-  const stars   = [1,2,3,4,5].map(n=>`<span class="sheet-star${log.rating&&n<=log.rating?' lit':''}">★</span>`).join('');
-  const hatchChips = (log.hatches||[]).map(h=>`<span class="sheet-chip hatch">${h}</span>`).join('');
-  const skyChips   = (log.sky||[]).map(s=>`<span class="sheet-chip">${s}</span>`).join('');
-  const photos     = (log.photo_urls||[]).map(url=>`<img class="sheet-photo" src="${url}" alt="Trip photo">`).join('');
-  const privacyIcon = log.visibility==='Public'?'🌍':log.visibility==='Private'?'🔒':'👥';
+  const speciesRows  = log.fish_counts ? Object.entries(log.fish_counts).map(([sp,ct])=>`<tr><td>${sp}</td><td>${ct}</td></tr>`).join('') : '';
+  const flyRows      = (log.flies_used||[]).map(f=>`<tr><td>${f.pattern||'—'}</td><td>${f.size||'—'}</td><td>${f.caught||'0'}</td><td>${f.notes||''}</td></tr>`).join('');
+  const stars        = [1,2,3,4,5].map(n=>`<span class="sheet-star${log.rating&&n<=log.rating?' lit':''}">★</span>`).join('');
+  const hatchChips   = (log.hatches||[]).map(h=>`<span class="sheet-chip hatch">${h}</span>`).join('');
+  const skyChips     = (log.sky||[]).map(s=>`<span class="sheet-chip">${s}</span>`).join('');
+  const photos       = (log.photo_urls||[]).map(url=>`<img class="sheet-photo" src="${url}" alt="Trip photo">`).join('');
+  const privacyIcon  = log.visibility==='Public'?'🌍':log.visibility==='Private'?'🔒':'👥';
 
-  document.getElementById('freport-content').innerHTML = `
-    <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 18px 0">
-      <button onclick="closeFullReport()" style="background:none;border:none;font-size:13px;color:var(--fern);cursor:pointer;font-family:var(--font-sans);padding:8px 0">← Back to reports</button>
-      <div class="rsheet-close" onclick="closeFreport()">✕</div>
+  // Build sections safely
+  let html = `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 18px 0">
+      <button onclick="restoreRiverList()" style="background:none;border:none;font-size:13px;color:var(--fern);cursor:pointer;font-family:var(--font-sans);padding:8px 0;display:flex;align-items:center;gap:4px">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+        Back
+      </button>
+      <div class="rsheet-close" onclick="closeRsheet()">✕</div>
     </div>
     <div style="padding:4px 18px 14px;border-bottom:1px solid var(--border)">
       <div style="font-family:var(--font-serif);font-size:22px;font-weight:600;color:var(--forest);margin-bottom:3px">${log.river||'Unknown water'}</div>
-      <div style="font-size:13px;color:var(--stone)">${log.section?log.section+' · ':''}${dateStr}</div>
-      <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;align-items:center">
+      <div style="font-size:13px;color:var(--stone);margin-bottom:6px">${log.section?log.section+' · ':''}${dateStr}</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
         ${log.fishing_method?`<span class="sheet-chip" style="margin:0">${log.fishing_method}</span>`:''}
         <span class="privacy-badge">${privacyIcon} ${log.visibility||'Public'}</span>
       </div>
-    </div>
-    ${photos?`<div class="sheet-photos">${photos}</div>`:''}
+    </div>`;
+
+  if (photos) html += `<div class="sheet-photos">${photos}</div>`;
+
+  html += `
     <div class="sheet-section">
       <div class="sheet-section-title">
         <div class="sheet-section-icon" style="background:#e3eef7"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3d7a9c" stroke-width="2"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9z"/></svg></div>
@@ -1349,8 +1359,10 @@ function openFullReport(id) {
         ${log.start_time?`<div class="data-cell"><label>On water</label><p>${formatTime(log.start_time)}${log.end_time?' – '+formatTime(log.end_time):''}</p></div>`:''}
       </div>
       ${skyChips?`<div class="sheet-chips">${skyChips}</div>`:''}
-    </div>
-    ${log.hatches?.length?`
+    </div>`;
+
+  if (log.hatches && log.hatches.length) {
+    html += `
     <div class="sheet-section">
       <div class="sheet-section-title">
         <div class="sheet-section-icon" style="background:#f7ede0"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#c9843a" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
@@ -1359,8 +1371,11 @@ function openFullReport(id) {
       <div class="sheet-chips">${hatchChips}</div>
       ${log.hatch_intensity||log.hatch_timing?`<div class="data-grid">${log.hatch_intensity?`<div class="data-cell"><label>Intensity</label><p>${log.hatch_intensity}</p></div>`:''} ${log.hatch_timing?`<div class="data-cell"><label>Timing</label><p>${log.hatch_timing}</p></div>`:''}</div>`:''}
       ${log.hatch_notes?`<div class="sheet-notes">"${log.hatch_notes}"</div>`:''}
-    </div>`:''}
-    ${log.fly_line||flyRows?`
+    </div>`;
+  }
+
+  if (log.fly_line || flyRows) {
+    html += `
     <div class="sheet-section">
       <div class="sheet-section-title">
         <div class="sheet-section-icon" style="background:#e0f0ee"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2a7a72" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 12l2 2 4-4"/></svg></div>
@@ -1373,8 +1388,11 @@ function openFullReport(id) {
         ${log.tippet_size?`<div class="data-cell"><label>Tippet</label><p>${log.tippet_size} ${log.tippet_material||''}</p></div>`:''}
       </div>`:''}
       ${flyRows?`<table class="fly-table"><thead><tr><th>Pattern</th><th>Size</th><th>Caught</th><th>Notes</th></tr></thead><tbody>${flyRows}</tbody></table>`:''}
-    </div>`:''}
-    ${fishTotal>0||speciesRows?`
+    </div>`;
+  }
+
+  if (fishTotal > 0 || speciesRows) {
+    html += `
     <div class="sheet-section">
       <div class="sheet-section-title">
         <div class="sheet-section-icon" style="background:#e8f4e5"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3d6b36" stroke-width="2"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/></svg></div>
@@ -1382,19 +1400,32 @@ function openFullReport(id) {
       </div>
       ${speciesRows?`<table class="fly-table"><thead><tr><th>Species</th><th>Count</th></tr></thead><tbody>${speciesRows}</tbody></table>`:''}
       ${log.biggest_fish_length?`<div class="data-grid"><div class="data-cell"><label>Biggest fish</label><p>${log.biggest_fish_length}"${log.biggest_fish_weight?' · '+log.biggest_fish_weight+' lb':''}</p></div>${log.fishing_method?`<div class="data-cell"><label>Method</label><p>${log.fishing_method}</p></div>`:''}</div>`:''}
-    </div>`:''}
-    ${log.trip_notes||log.rating?`
-    <div class="sheet-section">
+    </div>`;
+  }
+
+  if (log.trip_notes || log.rating) {
+    html += `
+    <div class="sheet-section" style="margin-bottom:20px">
       <div class="sheet-section-title">
         <div class="sheet-section-icon" style="background:#ede8f5"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6a4da0" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div>
         <span>Notes</span>
       </div>
       ${log.rating?`<div class="sheet-stars">${stars}<span style="font-size:12px;color:var(--stone);margin-left:6px">${log.rating}/5</span></div>`:''}
       ${log.trip_notes?`<div class="sheet-notes">"${log.trip_notes}"</div>`:''}
-    </div>`:''}`;
+    </div>`;
+  }
 
-  document.getElementById('freport-overlay').classList.add('open');
-  document.getElementById('freport-sheet').scrollTop = 0;
+  // Replace rsheet body with full report
+  document.querySelector('.rsheet').scrollTop = 0;
+  document.getElementById('rsheet-river').textContent = '';
+  document.getElementById('rsheet-sub').textContent   = '';
+  document.getElementById('rsheet-body').innerHTML    = html;
+  window._rsheetPrevRiver = null; // mark that we're in full report view
+}
+
+function restoreRiverList() {
+  if (_prevRiverName) openRiverReports(_prevRiverName);
+  else closeRsheet();
 }
 
 function closeFullReport() {

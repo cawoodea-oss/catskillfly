@@ -600,6 +600,7 @@
   }
 </style>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="auth.js"></script>
 </head>
 <body>
 
@@ -1443,8 +1444,7 @@ async function doAutofill() {
 }
 
 // ── SUPABASE CONNECTION ──
-const SUPABASE_URL = 'https://csdahuhrsxeumqmjsidw.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_gWCvq372JoF8aoUQIcz-zw_eLV_NoDc';
+// SUPABASE_URL and SUPABASE_KEY defined in auth.js
 
 // ── AUTH CHECK ──
 let currentSession = null;
@@ -1807,6 +1807,5 @@ function confirmMapLocation() {
   }, 300);
 }
 </script>
-<script src="auth.js"></script>
 </body>
 </html>

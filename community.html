@@ -240,6 +240,7 @@
   .nav-item.active { color:var(--fern); }
   .nav-log { width:44px; height:44px; background:var(--forest); border-radius:50%; display:flex; align-items:center; justify-content:center; margin-top:-20px; box-shadow:0 4px 14px rgba(26,46,26,0.35); border:3px solid var(--cream); }
 </style>
+<script src="auth.js"></script>
 </head>
 <body>
 
@@ -388,8 +389,7 @@
 </nav>
 
 <script>
-const SUPABASE_URL = 'https://csdahuhrsxeumqmjsidw.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_gWCvq372JoF8aoUQIcz-zw_eLV_NoDc';
+// SUPABASE_URL and SUPABASE_KEY defined in auth.js
 
 let currentSession  = null;
 let currentUser     = null;

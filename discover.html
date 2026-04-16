@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="theme-color" content="#1a2e1a">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-title" content="CatskillFly">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Catskill Fly — Discover</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -580,6 +582,7 @@
   .popup-river { font-family: var(--font-serif); font-size: 14px; font-weight: 600; color: var(--forest); margin-bottom: 4px; }
   .popup-detail { font-size: 12px; color: var(--stone); line-height: 1.7; }
 </style>
+<script src="auth.js"></script>
 </head>
 <body>
 
@@ -708,8 +711,7 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-const SUPABASE_URL = 'https://csdahuhrsxeumqmjsidw.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_gWCvq372JoF8aoUQIcz-zw_eLV_NoDc';
+// SUPABASE_URL and SUPABASE_KEY defined in auth.js
 
 let allLogs       = [];
 let riverMap      = {};   // river name → aggregated data

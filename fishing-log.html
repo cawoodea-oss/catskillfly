@@ -716,6 +716,30 @@
       <label>Water flow (cfs)</label>
       <input type="number" id="flow" placeholder="340">
 
+      <div id="usgs-gauge-row" style="display:none; margin-top:8px;">
+        <div style="
+          background: var(--parchment);
+          border: 1px solid var(--border);
+          border-radius: 10px;
+          padding: 9px 12px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 10px;">
+          <div>
+            <div style="font-size:10px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--stone);margin-bottom:2px">USGS Gauge</div>
+            <div id="usgs-gauge-name" style="font-size:13px;color:var(--ink);font-weight:500"></div>
+            <div id="usgs-gauge-id" style="font-size:11px;color:var(--stone)"></div>
+          </div>
+          <a id="usgs-gauge-link" href="#" target="_blank" style="
+            font-size:11px;color:var(--current);text-decoration:none;
+            white-space:nowrap;flex-shrink:0;border:1px solid rgba(42,74,94,0.2);
+            border-radius:8px;padding:4px 8px;background:#e3eef7;">
+            View ↗
+          </a>
+        </div>
+      </div>
+
       <label>Sky / weather</label>
       <div class="chip-row" id="sky-chips">
         <div class="chip chip-blue" onclick="toggleChip(this)">☀️ Sunny</div>
@@ -1351,85 +1375,83 @@ async function doAutofill() {
 
   // ── 2. USGS: nearest stream gauge — flow (cfs) + water temp ──
   try {
-    // Use a wider search and the period parameter to get recent data
-    const usgsRes = await fetch(
-      `https://waterservices.usgs.gov/nwis/iv/?format=json` +
+    const usgsUrl = `https://waterservices.usgs.gov/nwis/iv/?format=json` +
       `&bBox=${(lng-0.6).toFixed(4)},${(lat-0.6).toFixed(4)},${(lng+0.6).toFixed(4)},${(lat+0.6).toFixed(4)}` +
-      `&parameterCd=00060,00010&siteStatus=active&siteType=ST&period=PT2H`
-    );
+      `&parameterCd=00060,00010&siteStatus=active&siteType=ST&period=PT2H`;
+
+    console.log('📍 USGS URL:', usgsUrl);
+
+    const usgsRes = await fetch(usgsUrl);
     const usgs = await usgsRes.json();
     const timeSeries = usgs?.value?.timeSeries || [];
 
-    // Group readings by site ID
+    console.log(`📊 USGS returned ${timeSeries.length} time series`);
+
     const sites = {};
     timeSeries.forEach(ts => {
       const siteId    = ts.sourceInfo?.siteCode?.[0]?.value;
+      const siteName  = ts.sourceInfo?.siteName || siteId;
       const siteLat   = parseFloat(ts.sourceInfo?.geoLocation?.geogLocation?.latitude);
       const siteLng   = parseFloat(ts.sourceInfo?.geoLocation?.geogLocation?.longitude);
       const paramCode = ts.variable?.variableCode?.[0]?.value;
+      const paramName = ts.variable?.variableName || paramCode;
 
-      // Get the most recent valid value — USGS returns newest last in the array
       const valueArr = ts.values?.[0]?.value || [];
-      let val = null;
+      let val = null, valTime = null;
       for (let i = valueArr.length - 1; i >= 0; i--) {
         const v = parseFloat(valueArr[i]?.value);
-        if (!isNaN(v) && v > 0 && v !== -999999) { val = v; break; }
+        if (!isNaN(v) && v > 0 && v !== -999999) { val = v; valTime = valueArr[i]?.dateTime; break; }
       }
+
+      console.log(`  📌 ${siteId} | ${siteName} | param:${paramCode} | value:${val} | time:${valTime}`);
 
       if (!siteId || !siteLat || !siteLng || val === null) return;
-
       if (!sites[siteId]) {
         sites[siteId] = {
-          id:   siteId,
-          name: ts.sourceInfo?.siteName || siteId,
-          lat:  siteLat,
-          lng:  siteLng,
+          id: siteId, name: siteName, lat: siteLat, lng: siteLng,
           dist: Math.sqrt(Math.pow(siteLat - lat, 2) + Math.pow(siteLng - lng, 2)),
-          flow: null,
-          temp: null
+          flow: null, temp: null
         };
       }
-      if (paramCode === '00060') sites[siteId].flow = val;  // streamflow cfs
-      if (paramCode === '00010') sites[siteId].temp = val;  // water temp °C
+      if (paramCode === '00060') sites[siteId].flow = val;
+      if (paramCode === '00010') sites[siteId].temp = val;
     });
 
     const siteList = Object.values(sites);
-    console.log('USGS sites found:', siteList.map(s => `${s.name}: ${s.flow} cfs (${(s.dist*69).toFixed(1)} mi)`));
+    console.log('🗺️ Aggregated sites:');
+    siteList.forEach(s => console.log(`  ${s.id} | ${s.name} | flow:${s.flow} cfs | temp:${s.temp}°C | ${(s.dist*69).toFixed(1)} mi away`));
 
-    // Filter to sites within 0.6 degrees that have a valid flow
     const flowSites = siteList.filter(s => s.flow !== null && s.flow > 0 && s.dist < 0.6);
+    console.log(`✅ Flow sites in range: ${flowSites.length}`);
 
     if (flowSites.length === 0) {
-      console.warn('No USGS flow sites found nearby');
+      console.warn('⚠️ No USGS flow sites found nearby');
+      document.getElementById('usgs-gauge-row').style.display = 'none';
     } else {
-      // Pick highest flow — this reliably selects the main stem over tributaries
       const best = flowSites.sort((a, b) => b.flow - a.flow)[0];
-
-      console.log('Selected gauge:', best.name, best.flow, 'cfs');
+      console.log(`🏆 Selected: ${best.id} | ${best.name} | ${best.flow} cfs`);
 
       document.getElementById('flow').value = Math.round(best.flow);
       filled.push(`Flow ${Math.round(best.flow)} cfs`);
 
-      const niceName = best.name
-        .toLowerCase()
-        .replace(/\b\w/g, l => l.toUpperCase())
-        .substring(0, 50);
-      banner.querySelector('span').textContent = `USGS: ${niceName}`;
+      const niceName = best.name.toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
+      document.getElementById('usgs-gauge-name').textContent = niceName;
+      document.getElementById('usgs-gauge-id').textContent   = `Site #${best.id}`;
+      document.getElementById('usgs-gauge-link').href = `https://waterdata.usgs.gov/monitoring-location/${best.id}/`;
+      document.getElementById('usgs-gauge-row').style.display = 'block';
+      window._usgsSiteName = niceName;
+      window._usgsSiteId   = best.id;
+      banner.querySelector('span').textContent = `USGS: ${niceName.substring(0, 45)}`;
 
-      // Water temp — from same site if available, otherwise nearest
       let tempVal = best.temp;
       if (tempVal === null) {
-        const tempSite = siteList
-          .filter(s => s.temp !== null)
-          .sort((a, b) => a.dist - b.dist)[0];
+        const tempSite = siteList.filter(s => s.temp !== null).sort((a,b) => a.dist - b.dist)[0];
         if (tempSite) tempVal = tempSite.temp;
       }
-
       if (tempVal !== null) {
         const waterTempF = Math.round(tempVal * 9/5 + 32);
         const waterTempC = Math.round(tempVal * 10) / 10;
-        document.getElementById('water-temp').value =
-          currentUnit === 'F' ? waterTempF : waterTempC;
+        document.getElementById('water-temp').value = currentUnit === 'F' ? waterTempF : waterTempC;
         filled.push(`Water ${currentUnit === 'F' ? waterTempF + '°F' : waterTempC + '°C'}`);
       }
     }
@@ -1611,7 +1633,9 @@ async function submitLog() {
     visibility:          visibility,
     spot_precision:      spotPrec,
     photo_urls:          uploadedPhotoUrls.length ? uploadedPhotoUrls : null,
-    user_id:             currentSession?.user?.id || null
+    user_id:             currentSession?.user?.id || null,
+    usgs_site_name:      window._usgsSiteName || null,
+    usgs_site_id:        window._usgsSiteId   || null
   };
 
   // ── Send to Supabase ──
@@ -1712,6 +1736,11 @@ function resetForm() {
 
   // Hide autofill banner
   document.getElementById('autofill-banner').style.display = 'none';
+
+  // Reset USGS gauge display
+  document.getElementById('usgs-gauge-row').style.display = 'none';
+  window._usgsSiteName = null;
+  window._usgsSiteId   = null;
 
   // Reset map picker state
   pickedLat = null;

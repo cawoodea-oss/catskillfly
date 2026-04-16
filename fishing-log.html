@@ -1351,7 +1351,6 @@ async function doAutofill() {
 
   // ── 2. USGS: nearest stream gauge — flow (cfs) + water temp ──
   try {
-    // Find sites within ~0.5 degree radius with streamflow data
     const usgsRes = await fetch(
       `https://waterservices.usgs.gov/nwis/iv/?format=json` +
       `&bBox=${(lng-0.5).toFixed(4)},${(lat-0.5).toFixed(4)},${(lng+0.5).toFixed(4)},${(lat+0.5).toFixed(4)}` +
@@ -1360,47 +1359,71 @@ async function doAutofill() {
     const usgs = await usgsRes.json();
     const timeSeries = usgs?.value?.timeSeries || [];
 
-    // Find closest gauge by coordinates
-    let closestFlow   = null;
-    let closestTemp   = null;
-    let closestDist   = Infinity;
-    let gaugeName     = null;
-
+    // Group readings by site ID so we can evaluate each site as a whole
+    const sites = {};
     timeSeries.forEach(ts => {
+      const siteId  = ts.sourceInfo?.siteCode?.[0]?.value;
       const siteLat = parseFloat(ts.sourceInfo?.geoLocation?.geogLocation?.latitude);
       const siteLng = parseFloat(ts.sourceInfo?.geoLocation?.geogLocation?.longitude);
-      if (!siteLat || !siteLng) return;
+      if (!siteId || !siteLat || !siteLng) return;
 
-      const dist = Math.sqrt(Math.pow(siteLat - lat, 2) + Math.pow(siteLng - lng, 2));
       const paramCode = ts.variable?.variableCode?.[0]?.value;
-      const val = parseFloat(ts.values?.[0]?.value?.[0]?.value);
-      if (isNaN(val)) return;
+      const val       = parseFloat(ts.values?.[0]?.value?.[0]?.value);
+      if (isNaN(val) || val < 0) return;
 
-      if (dist < closestDist) {
-        closestDist = dist;
-        gaugeName = ts.sourceInfo?.siteName || null;
+      if (!sites[siteId]) {
+        sites[siteId] = {
+          id:   siteId,
+          name: ts.sourceInfo?.siteName || siteId,
+          lat:  siteLat,
+          lng:  siteLng,
+          dist: Math.sqrt(Math.pow(siteLat - lat, 2) + Math.pow(siteLng - lng, 2)),
+          flow: null,
+          temp: null
+        };
       }
-
-      if (paramCode === '00060' && dist < 0.6) closestFlow = val;   // streamflow cfs
-      if (paramCode === '00010' && dist < 0.6) closestTemp = val;   // water temp °C
+      if (paramCode === '00060') sites[siteId].flow = val;  // cfs
+      if (paramCode === '00010') sites[siteId].temp = val;  // °C
     });
 
-    if (closestFlow !== null) {
-      document.getElementById('flow').value = Math.round(closestFlow);
-      filled.push(`Flow ${Math.round(closestFlow)} cfs`);
-    }
+    const siteList = Object.values(sites);
 
-    if (closestTemp !== null) {
-      // USGS returns °C — convert to °F if needed
-      const waterTempF = Math.round(closestTemp * 9/5 + 32);
-      const waterTempC = Math.round(closestTemp * 10) / 10;
-      document.getElementById('water-temp').value =
-        currentUnit === 'F' ? waterTempF : waterTempC;
-      filled.push(`Water ${currentUnit === 'F' ? waterTempF + '°F' : waterTempC + '°C'}`);
-    }
+    // Filter to sites within 0.5 degrees that have a flow reading
+    const flowSites = siteList.filter(s => s.flow !== null && s.dist < 0.5);
 
-    if (gaugeName) {
-      banner.querySelector('span').textContent = `Data from USGS gauge: ${gaugeName.toLowerCase().replace(/\b\w/g, l => l.toUpperCase()).substring(0, 40)}`;
+    if (flowSites.length === 0) {
+      console.warn('No USGS flow sites found nearby');
+    } else {
+      // Pick the site with the HIGHEST flow — this is almost always
+      // the main stem river gauge, not a small tributary
+      const best = flowSites.sort((a, b) => b.flow - a.flow)[0];
+
+      document.getElementById('flow').value = Math.round(best.flow);
+      filled.push(`Flow ${Math.round(best.flow)} cfs`);
+
+      // Show gauge name in banner so user can verify
+      const niceName = best.name
+        .toLowerCase()
+        .replace(/\b\w/g, l => l.toUpperCase())
+        .substring(0, 50);
+      banner.querySelector('span').textContent = `USGS: ${niceName}`;
+
+      // Water temp from same site if available, otherwise nearest site with temp
+      let tempVal = best.temp;
+      if (tempVal === null) {
+        const tempSite = siteList
+          .filter(s => s.temp !== null)
+          .sort((a, b) => a.dist - b.dist)[0];
+        if (tempSite) tempVal = tempSite.temp;
+      }
+
+      if (tempVal !== null) {
+        const waterTempF = Math.round(tempVal * 9/5 + 32);
+        const waterTempC = Math.round(tempVal * 10) / 10;
+        document.getElementById('water-temp').value =
+          currentUnit === 'F' ? waterTempF : waterTempC;
+        filled.push(`Water ${currentUnit === 'F' ? waterTempF + '°F' : waterTempC + '°C'}`);
+      }
     }
 
   } catch (e) {

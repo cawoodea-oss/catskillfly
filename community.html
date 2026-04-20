@@ -236,6 +236,71 @@
   .reply-send { width:40px; height:40px; background:var(--forest); border:none; border-radius:10px; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; transition:background 0.2s; }
   .reply-send:active { background:var(--moss); }
 
+  /* ── FISHING REPORT FEATURE CARD ── */
+  .report-feature-card {
+    display: flex; align-items: center; gap: 12px;
+    background: linear-gradient(135deg, var(--forest) 0%, var(--water) 100%);
+    border-radius: var(--radius); padding: 14px 16px;
+    cursor: pointer; margin-bottom: 12px;
+    box-shadow: 0 4px 20px rgba(26,46,26,0.2);
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .report-feature-card:active { transform: scale(0.98); box-shadow: 0 2px 10px rgba(26,46,26,0.2); }
+  .report-feature-icon {
+    font-size: 28px; line-height: 1; flex-shrink: 0;
+  }
+  .report-feature-text { flex: 1; }
+  .report-feature-title { font-family: var(--font-serif); font-size: 16px; font-weight: 600; color: white; margin-bottom: 2px; }
+  .report-feature-sub   { font-size: 12px; color: var(--mist); opacity: 0.85; }
+  /* ── REPORT RESULTS ── */
+  .report-section {
+    margin-bottom: 18px;
+  }
+  .report-section-title {
+    font-family: var(--font-serif); font-size: 14px; font-weight: 600;
+    color: var(--forest); margin-bottom: 8px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .report-stat-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+  }
+  .report-stat {
+    background: var(--parchment); border: 1px solid var(--border);
+    border-radius: 10px; padding: 10px 8px; text-align: center;
+  }
+  .report-stat-val { font-family: var(--font-serif); font-size: 18px; font-weight: 600; color: var(--forest); line-height: 1; margin-bottom: 3px; }
+  .report-stat-key { font-size: 10px; color: var(--stone); text-transform: uppercase; letter-spacing: 0.05em; }
+  .report-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+  .report-chip {
+    font-size: 12px; padding: 4px 10px; border-radius: 20px;
+    background: var(--parchment); border: 1px solid var(--border); color: var(--ink);
+  }
+  .report-chip.hatch { background: #fef3e2; border-color: rgba(201,132,58,0.25); color: var(--amber); }
+  .report-chip.fly   { background: #e8f4e5; border-color: rgba(61,107,54,0.25); color: var(--fern); }
+  .report-gauge-link {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 11px; color: var(--fern); text-decoration: none; margin-top: 6px;
+  }
+  .report-checkin {
+    background: var(--parchment); border: 1px solid var(--border);
+    border-radius: 10px; padding: 10px 12px; margin-bottom: 8px;
+  }
+  .report-checkin:last-child { margin-bottom: 0; }
+  .report-checkin-meta { font-size: 11px; color: var(--stone); margin-bottom: 4px; }
+  .report-checkin-strip { display: flex; gap: 10px; margin-top: 6px; }
+  .report-checkin-cell { font-size: 12px; color: var(--stone); }
+  .report-checkin-cell strong { color: var(--ink); }
+  .report-no-data { font-size: 13px; color: var(--stone); font-style: italic; }
+  .report-intel-row { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px; }
+  .report-intel-row span:first-child { color: var(--stone); }
+  .report-intel-row span:last-child  { color: var(--ink); font-weight: 500; }
+  .report-location-header {
+    background: var(--forest); color: white;
+    border-radius: 10px; padding: 12px 14px; margin-bottom: 16px;
+  }
+  .report-location-name { font-family: var(--font-serif); font-size: 18px; font-weight: 600; margin-bottom: 2px; }
+  .report-location-sub  { font-size: 12px; opacity: 0.75; }
+
   /* ── NAV BAR ── */
   .nav-bar { position:fixed; bottom:0; left:0; right:0; background:var(--card-bg); border-top:1px solid var(--border); display:flex; padding:10px 0 max(10px,env(safe-area-inset-bottom)); z-index:100; box-shadow:0 -4px 20px rgba(26,46,26,0.08); }
   .nav-item { flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; font-size:10px; font-weight:500; color:var(--stone); text-decoration:none; cursor:pointer; transition:color 0.15s; letter-spacing:0.04em; text-transform:uppercase; }
@@ -264,6 +329,16 @@
 </div>
 
 <div class="page-body">
+
+  <!-- FISHING REPORT FEATURE CARD -->
+  <div class="report-feature-card" onclick="openReportSearch()">
+    <div class="report-feature-icon">🎣</div>
+    <div class="report-feature-text">
+      <div class="report-feature-title">Get a Fishing Report</div>
+      <div class="report-feature-sub">Conditions, hatches & community intel for any water</div>
+    </div>
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+  </div>
 
   <div class="new-post-bar" onclick="openNewPost()">
     <div class="avatar-sm" id="header-avatar">?</div>
@@ -361,6 +436,40 @@
   <div class="sheet" id="thread-sheet">
     <div class="sheet-handle"><div></div></div>
     <div id="thread-content"></div>
+  </div>
+</div>
+
+<!-- ── FISHING REPORT SHEET ── -->
+<div class="sheet-overlay" id="report-overlay" onclick="closeSheetIfBg(event,'report-overlay')">
+  <div class="sheet" style="max-height:92vh">
+    <div class="sheet-handle"><div></div></div>
+    <div class="sheet-header">
+      <h3>Fishing Report</h3>
+      <div class="sheet-close" onclick="closeSheet('report-overlay')">✕</div>
+    </div>
+    <div class="sheet-body" id="report-sheet-body">
+      <!-- Search state -->
+      <div id="report-search-state">
+        <label>River or location</label>
+        <div style="display:flex;gap:8px">
+          <input type="text" id="report-location-input"
+            placeholder="e.g. Beaverkill, West Branch Delaware…"
+            style="flex:1"
+            onkeydown="if(event.key==='Enter')generateReport()">
+          <button onclick="generateReport()" id="report-btn" style="
+            padding:11px 16px; background:var(--forest); color:white;
+            border:none; border-radius:10px; cursor:pointer;
+            font-family:var(--font-sans); font-weight:500; font-size:14px; white-space:nowrap">
+            Get Report
+          </button>
+        </div>
+        <p style="font-size:12px;color:var(--stone);margin-top:10px;line-height:1.6">
+          Pulls live USGS gauge data, today's weather, and recent catch reports from the community.
+        </p>
+      </div>
+      <!-- Results rendered here -->
+      <div id="report-results" style="margin-top:16px"></div>
+    </div>
   </div>
 </div>
 
@@ -829,6 +938,315 @@ function getTimeAgo(dateStr) {
   if (diff < 86400) return Math.floor(diff/3600) + 'h ago';
   if (diff < 604800) return Math.floor(diff/86400) + 'd ago';
   return new Date(dateStr).toLocaleDateString('en-US',{month:'short',day:'numeric'});
+}
+
+// ── FISHING REPORT ──
+
+// Catskill hatch calendar by month (1=Jan … 12=Dec)
+const CATSKILL_HATCHES = {
+  1:  { hatches: ['Midge'],
+        flies:   ['Midge #20–24', 'Zebra Midge #20', 'San Juan Worm #12'] },
+  2:  { hatches: ['Midge', 'Early Black Stonefly'],
+        flies:   ['Little Black Stone #16', 'Midge #20–24', 'Pheasant Tail #16'] },
+  3:  { hatches: ['Blue-Winged Olive', 'Early Black Stonefly', 'Midge'],
+        flies:   ['BWO Sparkle Dun #18', 'Pheasant Tail #16', 'RS2 #20', 'Elk Hair Caddis #16'] },
+  4:  { hatches: ['Quill Gordon', 'Hendrickson', 'Blue-Winged Olive', 'March Brown'],
+        flies:   ['Quill Gordon #14', 'Hendrickson #14', 'BWO Parachute #18', 'March Brown Soft Hackle #12'] },
+  5:  { hatches: ['Sulphur', 'Caddis', 'Light Cahill', 'Grey Fox', 'March Brown', 'PMD'],
+        flies:   ['Sulphur #16', 'Elk Hair Caddis #14–16', 'Light Cahill #14', 'Grey Fox #12', 'Soft Hackle Wet #14'] },
+  6:  { hatches: ['Green Drake', 'Sulphur', 'Trico', 'Light Cahill', 'Caddis', 'Terrestrials'],
+        flies:   ['Green Drake #10', 'Coffin Fly #10', 'Sulphur #16–18', 'Trico Spinner #22', 'Letort Hopper #12'] },
+  7:  { hatches: ['Trico', 'Terrestrials', 'Sulphur', 'Caddis', 'Crane Fly'],
+        flies:   ['Trico Spinner #22–24', 'Black Ant #14–18', 'Beetle #14–16', 'Elk Hair Caddis #16', 'Dave\'s Hopper #10'] },
+  8:  { hatches: ['Trico', 'Terrestrials', 'Blue-Winged Olive', 'Caddis'],
+        flies:   ['Trico #22–24', 'Hopper #10–12', 'Ant #16', 'BWO Parachute #18', 'Stimulator #14'] },
+  9:  { hatches: ['Blue-Winged Olive', 'Caddis', 'Trico', 'Midge', 'Terrestrials'],
+        flies:   ['BWO Sparkle Dun #18–20', 'Elk Hair Caddis #16', 'Soft Hackle #16', 'Midge #20–22'] },
+  10: { hatches: ['Blue-Winged Olive', 'Midge', 'Caddis'],
+        flies:   ['BWO Parachute #18–20', 'Midge #20–24', 'Pheasant Tail #16–18', 'Woolly Bugger #8'] },
+  11: { hatches: ['Midge', 'Blue-Winged Olive'],
+        flies:   ['Midge #20–24', 'BWO #20', 'Zebra Midge', 'Streamer #6–8'] },
+  12: { hatches: ['Midge'],
+        flies:   ['Midge #20–24', 'Zebra Midge', 'San Juan Worm #12', 'Streamer #6–8'] }
+};
+
+function openReportSearch() {
+  document.getElementById('report-location-input').value = '';
+  document.getElementById('report-results').innerHTML = '';
+  document.getElementById('report-overlay').classList.add('open');
+  setTimeout(() => document.getElementById('report-location-input').focus(), 350);
+}
+
+async function generateReport() {
+  const query = document.getElementById('report-location-input').value.trim();
+  if (!query) return;
+
+  const btn     = document.getElementById('report-btn');
+  const results = document.getElementById('report-results');
+  btn.disabled  = true;
+  btn.textContent = 'Loading…';
+  results.innerHTML = `<div class="loading" style="border:none;padding:20px 0"><div class="spinner"></div>Pulling conditions & community data…</div>`;
+
+  try {
+    // ── 1. Geocode location ──
+    let lat = null, lng = null, displayName = query;
+    try {
+      const geoRes  = await fetch(
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query + ' river New York')}&format=json&limit=1`
+      );
+      const geoData = await geoRes.json();
+      if (geoData.length) {
+        lat = parseFloat(geoData[0].lat);
+        lng = parseFloat(geoData[0].lon);
+        displayName = geoData[0].display_name.split(',').slice(0,2).join(', ');
+      }
+    } catch(e) { console.warn('Geocode failed:', e); }
+
+    // ── 2. USGS gauge (flow + water temp) ──
+    let usgsFlow = null, usgsTemp = null, usgsGaugeName = null, usgsGaugeId = null;
+    if (lat && lng) {
+      try {
+        const usgsRes = await fetch(
+          `https://waterservices.usgs.gov/nwis/iv/?format=json` +
+          `&bBox=${(lng-0.3).toFixed(4)},${(lat-0.3).toFixed(4)},${(lng+0.3).toFixed(4)},${(lat+0.3).toFixed(4)}` +
+          `&parameterCd=00060,00010&siteStatus=active&siteType=ST&period=PT2H`
+        );
+        const usgs = await usgsRes.json();
+        const timeSeries = usgs?.value?.timeSeries || [];
+        const sites = {};
+        timeSeries.forEach(ts => {
+          const siteId  = ts.sourceInfo?.siteCode?.[0]?.value;
+          const siteLat = parseFloat(ts.sourceInfo?.geoLocation?.geogLocation?.latitude);
+          const siteLng = parseFloat(ts.sourceInfo?.geoLocation?.geogLocation?.longitude);
+          const param   = ts.variable?.variableCode?.[0]?.value;
+          const vals    = ts.values?.[0]?.value || [];
+          let val = null;
+          for (let i = vals.length - 1; i >= 0; i--) {
+            const v = parseFloat(vals[i]?.value);
+            if (!isNaN(v) && v > 0 && v !== -999999) { val = v; break; }
+          }
+          if (!siteId || !siteLat || !siteLng || val === null) return;
+          const dist = Math.sqrt(Math.pow(siteLat - lat, 2) + Math.pow(siteLng - lng, 2));
+          if (!sites[siteId]) sites[siteId] = { id: siteId, name: ts.sourceInfo?.siteName, dist, flow: null, temp: null };
+          if (param === '00060') sites[siteId].flow = val;
+          if (param === '00010') sites[siteId].temp = val;
+        });
+        const flowSites = Object.values(sites).filter(s => s.flow !== null && s.dist < 0.3);
+        if (flowSites.length) {
+          const best = flowSites.sort((a, b) => a.dist - b.dist)[0];
+          usgsFlow      = Math.round(best.flow);
+          usgsGaugeName = best.name?.toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
+          usgsGaugeId   = best.id;
+          if (best.temp === null) {
+            const tempSite = Object.values(sites).filter(s => s.temp !== null).sort((a,b) => a.dist - b.dist)[0];
+            if (tempSite) usgsTemp = Math.round(tempSite.temp * 9/5 + 32);
+          } else {
+            usgsTemp = Math.round(best.temp * 9/5 + 32);
+          }
+        }
+      } catch(e) { console.warn('USGS failed:', e); }
+    }
+
+    // ── 3. Weather (Open-Meteo) ──
+    let airTemp = null, sky = null, windMph = null;
+    if (lat && lng) {
+      try {
+        const wxRes = await fetch(
+          `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}` +
+          `&current=temperature_2m,weathercode,windspeed_10m&temperature_unit=fahrenheit&windspeed_unit=mph&timezone=auto`
+        );
+        const wx = (await wxRes.json()).current;
+        if (wx) {
+          airTemp = Math.round(wx.temperature_2m);
+          windMph = Math.round(wx.windspeed_10m);
+          const code = wx.weathercode;
+          if (code === 0)                    sky = '☀️ Sunny';
+          else if (code <= 2)                sky = '⛅ Partly cloudy';
+          else if (code === 3)               sky = '☁️ Overcast';
+          else if (code >= 45 && code <= 48) sky = '🌫️ Fog';
+          else if (code >= 51 && code <= 67) sky = '🌧️ Rain';
+          else if (code >= 80 && code <= 82) sky = '🌧️ Rain';
+        }
+      } catch(e) { console.warn('Weather failed:', e); }
+    }
+
+    // ── 4. Community trip logs (last 30 days, public) ──
+    const thirtyAgo = new Date(Date.now() - 30*24*60*60*1000).toISOString().split('T')[0];
+    let trips = [];
+    try {
+      const tRes = await fetch(
+        `${SUPABASE_URL}/rest/v1/trip_logs?river=ilike.*${encodeURIComponent(query)}*` +
+        `&trip_date=gte.${thirtyAgo}&visibility=eq.Public` +
+        `&select=fish_counts,flies_used,hatches,water_temp,flow_cfs,fishing_method,trip_date&limit=50`,
+        { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + (currentSession?.access_token || SUPABASE_KEY) } }
+      );
+      trips = tRes.ok ? await tRes.json() : [];
+    } catch(e) { console.warn('Trip logs failed:', e); }
+
+    // Aggregate trip data
+    const fishTotals = {}, flyTotals = {}, hatchTotals = {};
+    let totalFish = 0;
+    trips.forEach(t => {
+      if (t.fish_counts) Object.entries(t.fish_counts).forEach(([sp, ct]) => {
+        fishTotals[sp] = (fishTotals[sp]||0) + (parseInt(ct)||0);
+        totalFish += parseInt(ct)||0;
+      });
+      (t.flies_used||[]).forEach(f => {
+        if (f.pattern) flyTotals[f.pattern] = (flyTotals[f.pattern]||0) + (parseInt(f.caught)||1);
+      });
+      (t.hatches||[]).forEach(h => { hatchTotals[h] = (hatchTotals[h]||0) + 1; });
+    });
+    const topFish    = Object.entries(fishTotals).sort((a,b)=>b[1]-a[1]).slice(0,4);
+    const topFlies   = Object.entries(flyTotals).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([f])=>f);
+    const topHatches = Object.entries(hatchTotals).sort((a,b)=>b[1]-a[1]).slice(0,4).map(([h])=>h);
+
+    // ── 5. Recent community check-in posts ──
+    let checkins = [];
+    try {
+      const fourteenAgo = new Date(Date.now() - 14*24*60*60*1000).toISOString();
+      const cRes = await fetch(
+        `${SUPABASE_URL}/rest/v1/community_posts?river=ilike.*${encodeURIComponent(query)}*` +
+        `&category=eq.Conditions Check-in&created_at=gte.${fourteenAgo}` +
+        `&select=title,body,checkin_flow,checkin_water_temp,checkin_hatch,display_name,created_at` +
+        `&order=created_at.desc&limit=3`,
+        { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + (currentSession?.access_token || SUPABASE_KEY) } }
+      );
+      checkins = cRes.ok ? await cRes.json() : [];
+    } catch(e) { console.warn('Check-ins failed:', e); }
+
+    // ── 6. Seasonal hatch data ──
+    const month  = new Date().getMonth() + 1;
+    const season = CATSKILL_HATCHES[month];
+
+    // ── Render the report ──
+    renderReport({ query, displayName, lat, lng,
+      usgsFlow, usgsTemp, usgsGaugeName, usgsGaugeId,
+      airTemp, sky, windMph,
+      trips, totalFish, topFish, topFlies, topHatches,
+      checkins, season, month });
+
+  } catch(err) {
+    results.innerHTML = `<div class="empty-state"><h3>Couldn't generate report</h3><p>Check your connection and try again.</p></div>`;
+    console.error(err);
+  }
+
+  btn.disabled    = false;
+  btn.textContent = 'Get Report';
+}
+
+function renderReport(d) {
+  const el = document.getElementById('report-results');
+  const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+  // ── Location header ──
+  let html = `
+    <div class="report-location-header">
+      <div class="report-location-name">📍 ${d.query}</div>
+      <div class="report-location-sub">${d.displayName !== d.query ? d.displayName + ' · ' : ''}${monthNames[d.month-1]} ${new Date().getFullYear()}</div>
+    </div>`;
+
+  // ── Current Conditions ──
+  html += `<div class="report-section">
+    <div class="report-section-title">📊 Current Conditions</div>`;
+
+  const hasConditions = d.usgsFlow !== null || d.usgsTemp !== null || d.airTemp !== null;
+  if (hasConditions) {
+    html += `<div class="report-stat-grid">
+      <div class="report-stat">
+        <div class="report-stat-val">${d.usgsFlow !== null ? d.usgsFlow + ' cfs' : '—'}</div>
+        <div class="report-stat-key">Flow</div>
+      </div>
+      <div class="report-stat">
+        <div class="report-stat-val">${d.usgsTemp !== null ? d.usgsTemp + '°F' : '—'}</div>
+        <div class="report-stat-key">Water</div>
+      </div>
+      <div class="report-stat">
+        <div class="report-stat-val">${d.airTemp !== null ? d.airTemp + '°F' : '—'}</div>
+        <div class="report-stat-key">Air</div>
+      </div>
+    </div>`;
+    if (d.sky || d.windMph !== null) {
+      html += `<div style="font-size:13px;color:var(--stone);margin-top:8px">
+        ${d.sky ? d.sky : ''}${d.sky && d.windMph !== null ? ' · ' : ''}${d.windMph !== null ? d.windMph + ' mph wind' : ''}
+      </div>`;
+    }
+    if (d.usgsGaugeName) {
+      html += `<a class="report-gauge-link" href="https://waterdata.usgs.gov/monitoring-location/${d.usgsGaugeId}/" target="_blank">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        USGS · ${d.usgsGaugeName}
+      </a>`;
+    }
+  } else {
+    html += `<p class="report-no-data">${d.lat ? 'No USGS gauge found near this location.' : 'Location not found — conditions unavailable. Try a more specific name.'}</p>`;
+  }
+  html += `</div>`;
+
+  // ── Seasonal Hatches ──
+  html += `<div class="report-section">
+    <div class="report-section-title">🌿 What to Expect in ${monthNames[d.month-1]}</div>
+    <div style="font-size:12px;color:var(--stone);margin-bottom:6px;font-weight:500;text-transform:uppercase;letter-spacing:0.04em">Likely hatches</div>
+    <div class="report-chips">
+      ${d.season.hatches.map(h => `<span class="report-chip hatch">${h}</span>`).join('')}
+    </div>
+    <div style="font-size:12px;color:var(--stone);margin-top:12px;margin-bottom:6px;font-weight:500;text-transform:uppercase;letter-spacing:0.04em">Go-to flies this month</div>
+    <div class="report-chips">
+      ${d.season.flies.map(f => `<span class="report-chip fly">🪶 ${f}</span>`).join('')}
+    </div>
+  </div>`;
+
+  // ── Community Intel ──
+  html += `<div class="report-section">
+    <div class="report-section-title">🗺️ Community Intel <span style="font-size:12px;font-weight:400;color:var(--stone);font-family:var(--font-sans)">(last 30 days)</span></div>`;
+
+  if (d.trips.length === 0) {
+    html += `<p class="report-no-data">No public trip reports logged for this water in the last 30 days. Be the first!</p>`;
+  } else {
+    html += `<div class="report-intel-row"><span>Trips logged</span><span>${d.trips.length}</span></div>
+      <div class="report-intel-row"><span>Fish to hand</span><span>${d.totalFish || '—'}</span></div>`;
+
+    if (d.topFish.length) {
+      const fishStr = d.topFish.map(([sp, ct]) => `${ct} ${sp}`).join(' · ');
+      html += `<div class="report-intel-row"><span>Species</span><span style="font-size:12px;text-align:right;max-width:60%">${fishStr}</span></div>`;
+    }
+
+    if (d.topFlies.length) {
+      html += `<div style="margin-top:10px">
+        <div style="font-size:12px;color:var(--stone);font-weight:500;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:6px">What's working</div>
+        <div class="report-chips">${d.topFlies.map(f => `<span class="report-chip fly">🪶 ${f}</span>`).join('')}</div>
+      </div>`;
+    }
+
+    if (d.topHatches.length) {
+      html += `<div style="margin-top:10px">
+        <div style="font-size:12px;color:var(--stone);font-weight:500;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:6px">Hatches reported</div>
+        <div class="report-chips">${d.topHatches.map(h => `<span class="report-chip hatch">${h}</span>`).join('')}</div>
+      </div>`;
+    }
+  }
+  html += `</div>`;
+
+  // ── Recent Check-ins ──
+  if (d.checkins.length > 0) {
+    html += `<div class="report-section">
+      <div class="report-section-title">📍 Recent Check-ins</div>`;
+    d.checkins.forEach(c => {
+      const dateStr = new Date(c.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric'});
+      html += `<div class="report-checkin">
+        <div class="report-checkin-meta">${c.display_name || 'Angler'} · ${dateStr}</div>
+        <div style="font-size:14px;font-weight:500;color:var(--ink);margin-bottom:4px">${c.title}</div>
+        ${c.body ? `<div style="font-size:13px;color:var(--stone);line-height:1.5">${c.body}</div>` : ''}
+        ${(c.checkin_flow || c.checkin_water_temp || c.checkin_hatch) ? `
+        <div class="report-checkin-strip">
+          ${c.checkin_flow      ? `<div class="report-checkin-cell"><strong>${Math.round(c.checkin_flow)} cfs</strong> flow</div>` : ''}
+          ${c.checkin_water_temp? `<div class="report-checkin-cell"><strong>${c.checkin_water_temp}°F</strong> water</div>` : ''}
+          ${c.checkin_hatch     ? `<div class="report-checkin-cell"><strong>${c.checkin_hatch}</strong></div>` : ''}
+        </div>` : ''}
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  el.innerHTML = html;
 }
 
 // ── INIT ──

@@ -352,6 +352,73 @@
   }
   @keyframes spin { to { transform: rotate(360deg); } }
 
+  /* ── TRIP CARD ACTIONS ── */
+  .trip-card-actions {
+    display: flex; gap: 6px; margin-top: 8px;
+  }
+  .trip-action-btn {
+    font-size: 12px; padding: 4px 10px;
+    border-radius: 8px; border: 1px solid var(--border);
+    cursor: pointer; font-family: var(--font-sans);
+    background: var(--parchment); color: var(--stone);
+    transition: background 0.15s;
+  }
+  .trip-action-btn.edit  { color: var(--fern); border-color: rgba(61,107,54,0.25); }
+  .trip-action-btn.del   { color: #b44040;     border-color: rgba(180,60,60,0.25); }
+  .trip-action-btn:active { opacity: 0.7; }
+
+  /* ── FRIENDS ── */
+  .friend-list { display: flex; flex-direction: column; gap: 0; margin-bottom: 16px;
+    background: var(--card-bg); border: 1px solid var(--border);
+    border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+  .friend-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 14px; border-bottom: 1px solid var(--border);
+  }
+  .friend-item:last-child { border-bottom: none; }
+  .friend-avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--fern); display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-serif); font-size: 15px; color: white; flex-shrink: 0;
+  }
+  .friend-name { flex: 1; }
+  .friend-name strong { font-size: 14px; color: var(--ink); display: block; }
+  .friend-name span   { font-size: 12px; color: var(--stone); }
+  .friend-btn {
+    font-size: 12px; padding: 5px 10px; border-radius: 8px; border: none;
+    cursor: pointer; font-family: var(--font-sans); font-weight: 500;
+  }
+  .friend-btn.accept  { background: var(--fern); color: white; }
+  .friend-btn.decline { background: var(--parchment); color: var(--stone); border: 1px solid var(--border); margin-left: 4px; }
+  .friend-btn.remove  { background: transparent; color: #b44040; border: 1px solid rgba(180,60,60,0.25); }
+  .friend-empty {
+    padding: 18px 14px; font-size: 13px; color: var(--stone);
+    text-align: center; background: var(--card-bg);
+    border: 1px solid var(--border); border-radius: var(--radius);
+    box-shadow: var(--shadow); margin-bottom: 16px;
+  }
+  .pending-badge {
+    background: var(--amber); color: white;
+    font-size: 10px; font-weight: 700;
+    border-radius: 10px; padding: 1px 6px; margin-left: 6px;
+  }
+  .add-friend-btn {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 12px; color: var(--fern);
+    cursor: pointer; text-decoration: none; font-weight: 500;
+  }
+  .friend-search-result {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 0; border-bottom: 1px solid var(--border);
+  }
+  .friend-search-result:last-child { border-bottom: none; }
+  .send-req-btn {
+    margin-left: auto; font-size: 12px; padding: 5px 12px;
+    background: var(--fern); color: white; border: none;
+    border-radius: 8px; cursor: pointer; font-family: var(--font-sans); font-weight: 500;
+  }
+  .send-req-btn:disabled { background: var(--mist); color: var(--stone); }
+
   /* ── NAV BAR ── */
   .nav-bar {
     position: fixed; bottom: 0; left: 0; right: 0;
@@ -420,8 +487,20 @@
     <div class="loading"><div class="spinner"></div></div>
   </div>
 
+  <!-- FRIENDS -->
+  <div class="section-heading" style="margin-top:6px">
+    <h2>Friends <span id="pending-badge" class="pending-badge" style="display:none"></span></h2>
+    <span class="add-friend-btn" onclick="openAddFriend()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Add friend
+    </span>
+  </div>
+  <div id="friends-list">
+    <div class="loading"><div class="spinner"></div></div>
+  </div>
+
   <!-- MY TRIPS -->
-  <div class="section-heading">
+  <div class="section-heading" style="margin-top:6px">
     <h2>My trips</h2>
     <span id="trip-count" style="font-size:12px;color:var(--stone)"></span>
   </div>
@@ -469,6 +548,27 @@
           Or send a reset link to my email instead
         </span>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- ADD FRIEND SHEET -->
+<div class="sheet-overlay" id="friend-overlay" onclick="closeFriendIfBg(event)">
+  <div class="edit-sheet">
+    <div class="sheet-handle"><div></div></div>
+    <h3>Add a friend</h3>
+    <div class="edit-body">
+      <label>Search by name</label>
+      <div style="display:flex;gap:8px">
+        <input type="text" id="friend-search-input" placeholder="Enter display name…"
+          style="flex:1" oninput="clearFriendResults()" onkeydown="if(event.key==='Enter')searchFriends()">
+        <button onclick="searchFriends()" style="
+          padding:11px 16px; background:var(--fern); color:white; border:none;
+          border-radius:10px; cursor:pointer; font-family:var(--font-sans); font-weight:500; font-size:14px">
+          Search
+        </button>
+      </div>
+      <div id="friend-search-results" style="margin-top:14px"></div>
     </div>
   </div>
 </div>
@@ -538,6 +638,7 @@ async function init() {
   renderTopFlies();
   renderHatchChart();
   renderTripList();
+  fetchFriends();
 }
 
 function renderHeader() {
@@ -634,7 +735,7 @@ function renderTripList() {
     const visIcon = t.visibility==='Public'?'🌍':t.visibility==='Private'?'🔒':'👥';
 
     return `
-      <div class="trip-card" style="animation-delay:${i*0.04}s">
+      <div class="trip-card" style="animation-delay:${i*0.04}s;cursor:default">
         <div>
           <div class="trip-river">${t.river || 'Unknown water'}</div>
           <div class="trip-meta">
@@ -643,6 +744,10 @@ function renderTripList() {
             ${topFly?'<br>'+topFly:''}
           </div>
           <span class="vis-badge">${visIcon} ${t.visibility||'Public'}</span>
+          <div class="trip-card-actions">
+            <button class="trip-action-btn edit" onclick="editTrip('${t.id}')">✏️ Edit</button>
+            <button class="trip-action-btn del"  onclick="deleteTrip('${t.id}', event)">🗑 Delete</button>
+          </div>
         </div>
         <div class="trip-right">
           <div class="trip-fish">${fishTotal||'—'}<small>fish</small></div>
@@ -650,6 +755,272 @@ function renderTripList() {
         </div>
       </div>`;
   }).join('');
+}
+
+// ── FRIENDS ──
+let myFriends    = [];   // accepted friendships with profile info
+let pendingIn    = [];   // incoming requests (addressee = me, status = pending)
+let pendingOut   = [];   // outgoing requests (requester = me, status = pending)
+
+async function fetchFriends() {
+  const session = await getSession();
+  if (!session) return;
+  const headers = { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + session.access_token };
+
+  // Fetch all friendships involving this user
+  const [sentRes, recvRes] = await Promise.all([
+    fetch(`${SUPABASE_URL}/rest/v1/friendships?requester_id=eq.${currentUser.id}&select=*`, { headers }),
+    fetch(`${SUPABASE_URL}/rest/v1/friendships?addressee_id=eq.${currentUser.id}&select=*`, { headers })
+  ]);
+  const sent = sentRes.ok  ? await sentRes.json()  : [];
+  const recv = recvRes.ok  ? await recvRes.json()  : [];
+
+  // Collect all foreign user IDs we need profiles for
+  const friendIds = new Set();
+  sent.forEach(f => { if (f.status === 'accepted') friendIds.add(f.addressee_id); });
+  sent.forEach(f => { if (f.status === 'pending')  friendIds.add(f.addressee_id); });
+  recv.forEach(f => { if (f.status === 'accepted') friendIds.add(f.requester_id); });
+  recv.forEach(f => { if (f.status === 'pending')  friendIds.add(f.requester_id); });
+
+  let profiles = {};
+  if (friendIds.size > 0) {
+    const ids = Array.from(friendIds).map(id => `"${id}"`).join(',');
+    const pRes = await fetch(
+      `${SUPABASE_URL}/rest/v1/profiles?id=in.(${ids})&select=id,display_name,home_river`,
+      { headers }
+    );
+    if (pRes.ok) {
+      (await pRes.json()).forEach(p => { profiles[p.id] = p; });
+    }
+  }
+
+  myFriends  = [];
+  pendingIn  = [];
+  pendingOut = [];
+
+  // Accepted (sent)
+  sent.filter(f => f.status === 'accepted').forEach(f => {
+    myFriends.push({ ...f, profile: profiles[f.addressee_id] });
+  });
+  // Accepted (received)
+  recv.filter(f => f.status === 'accepted').forEach(f => {
+    myFriends.push({ ...f, profile: profiles[f.requester_id] });
+  });
+  // Pending incoming
+  recv.filter(f => f.status === 'pending').forEach(f => {
+    pendingIn.push({ ...f, profile: profiles[f.requester_id] });
+  });
+  // Pending outgoing
+  sent.filter(f => f.status === 'pending').forEach(f => {
+    pendingOut.push({ ...f, profile: profiles[f.addressee_id] });
+  });
+
+  renderFriends();
+}
+
+function renderFriends() {
+  const el = document.getElementById('friends-list');
+  const badge = document.getElementById('pending-badge');
+
+  // Show badge if there are incoming requests
+  if (pendingIn.length > 0) {
+    badge.textContent = pendingIn.length;
+    badge.style.display = 'inline';
+  } else {
+    badge.style.display = 'none';
+  }
+
+  const initials = name => (name || '?').split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
+
+  let html = '';
+
+  // Incoming requests
+  pendingIn.forEach(f => {
+    const p = f.profile || {};
+    html += `
+      <div class="friend-item">
+        <div class="friend-avatar">${initials(p.display_name)}</div>
+        <div class="friend-name">
+          <strong>${p.display_name || 'Unknown'}</strong>
+          <span>Sent you a friend request${p.home_river ? ' · ' + p.home_river : ''}</span>
+        </div>
+        <button class="friend-btn accept"  onclick="acceptRequest('${f.id}')">Accept</button>
+        <button class="friend-btn decline" onclick="declineRequest('${f.id}')">Decline</button>
+      </div>`;
+  });
+
+  // Accepted friends
+  myFriends.forEach(f => {
+    const p = f.profile || {};
+    html += `
+      <div class="friend-item">
+        <div class="friend-avatar">${initials(p.display_name)}</div>
+        <div class="friend-name">
+          <strong>${p.display_name || 'Unknown'}</strong>
+          <span>${p.home_river || 'Catskills angler'}</span>
+        </div>
+        <button class="friend-btn remove" onclick="removeFriend('${f.id}')">Remove</button>
+      </div>`;
+  });
+
+  // Outgoing pending
+  pendingOut.forEach(f => {
+    const p = f.profile || {};
+    html += `
+      <div class="friend-item" style="opacity:0.7">
+        <div class="friend-avatar">${initials(p.display_name)}</div>
+        <div class="friend-name">
+          <strong>${p.display_name || 'Unknown'}</strong>
+          <span>Request sent…</span>
+        </div>
+        <button class="friend-btn decline" onclick="cancelRequest('${f.id}')">Cancel</button>
+      </div>`;
+  });
+
+  if (!html) {
+    el.innerHTML = `<div class="friend-empty">No friends yet — tap <strong>Add friend</strong> to invite a fellow angler.</div>`;
+  } else {
+    el.innerHTML = `<div class="friend-list">${html}</div>`;
+  }
+}
+
+async function acceptRequest(friendshipId) {
+  const session = await getSession();
+  if (!session) return;
+  await fetch(`${SUPABASE_URL}/rest/v1/friendships?id=eq.${friendshipId}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json', 'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer ' + session.access_token, 'Prefer': 'return=minimal'
+    },
+    body: JSON.stringify({ status: 'accepted' })
+  });
+  await fetchFriends();
+}
+
+async function declineRequest(friendshipId) {
+  const session = await getSession();
+  if (!session) return;
+  await fetch(`${SUPABASE_URL}/rest/v1/friendships?id=eq.${friendshipId}`, {
+    method: 'DELETE',
+    headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + session.access_token }
+  });
+  await fetchFriends();
+}
+
+async function cancelRequest(friendshipId) {
+  return declineRequest(friendshipId);
+}
+
+async function removeFriend(friendshipId) {
+  if (!confirm('Remove this friend?')) return;
+  return declineRequest(friendshipId);
+}
+
+// ── ADD FRIEND SHEET ──
+function openAddFriend() {
+  document.getElementById('friend-search-input').value = '';
+  document.getElementById('friend-search-results').innerHTML = '';
+  document.getElementById('friend-overlay').classList.add('open');
+}
+function closeFriendIfBg(e) {
+  if (e.target === document.getElementById('friend-overlay'))
+    document.getElementById('friend-overlay').classList.remove('open');
+}
+function clearFriendResults() {
+  document.getElementById('friend-search-results').innerHTML = '';
+}
+
+async function searchFriends() {
+  const query = document.getElementById('friend-search-input').value.trim();
+  if (!query) return;
+  const session = await getSession();
+  if (!session) return;
+
+  const resultsEl = document.getElementById('friend-search-results');
+  resultsEl.innerHTML = `<div style="font-size:13px;color:var(--stone)">Searching…</div>`;
+
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/profiles?display_name=ilike.*${encodeURIComponent(query)}*&select=id,display_name,home_river&limit=10`,
+    { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + session.access_token } }
+  );
+  const results = res.ok ? await res.json() : [];
+
+  // Filter out self and existing friends/requests
+  const knownIds = new Set([
+    currentUser.id,
+    ...myFriends.map(f => f.profile?.id),
+    ...pendingIn.map(f => f.profile?.id),
+    ...pendingOut.map(f => f.profile?.id)
+  ]);
+  const filtered = results.filter(p => !knownIds.has(p.id));
+
+  if (!filtered.length) {
+    resultsEl.innerHTML = `<div style="font-size:13px;color:var(--stone);padding:8px 0">No anglers found with that name.</div>`;
+    return;
+  }
+
+  const initials = name => (name || '?').split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
+  resultsEl.innerHTML = filtered.map(p => `
+    <div class="friend-search-result">
+      <div class="friend-avatar" style="width:36px;height:36px;border-radius:50%;background:var(--fern);display:flex;align-items:center;justify-content:center;font-size:14px;color:white;flex-shrink:0">${initials(p.display_name)}</div>
+      <div>
+        <strong style="font-size:14px;display:block">${p.display_name || 'Unknown'}</strong>
+        <span style="font-size:12px;color:var(--stone)">${p.home_river || 'Catskills angler'}</span>
+      </div>
+      <button class="send-req-btn" id="req-btn-${p.id}" onclick="sendFriendRequest('${p.id}', this)">Add</button>
+    </div>`).join('');
+}
+
+async function sendFriendRequest(addresseeId, btn) {
+  const session = await getSession();
+  if (!session) return;
+  btn.disabled = true;
+  btn.textContent = 'Sending…';
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/friendships`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json', 'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer ' + session.access_token, 'Prefer': 'return=minimal'
+    },
+    body: JSON.stringify({ requester_id: currentUser.id, addressee_id: addresseeId, status: 'pending' })
+  });
+  if (res.ok) {
+    btn.textContent = 'Sent ✓';
+    btn.style.background = 'var(--stone)';
+    await fetchFriends();
+  } else {
+    btn.textContent = 'Error';
+    btn.disabled = false;
+  }
+}
+
+// ── TRIP ACTIONS ──
+function editTrip(id) {
+  window.location.href = `fishing-log.html?edit=${id}`;
+}
+
+async function deleteTrip(id, e) {
+  e.stopPropagation();
+  if (!confirm('Delete this trip log? This cannot be undone.')) return;
+  const session = await getSession();
+  if (!session) return;
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/trip_logs?id=eq.${id}&user_id=eq.${currentUser.id}`,
+    {
+      method: 'DELETE',
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + session.access_token }
+    }
+  );
+  if (res.ok) {
+    myTrips = myTrips.filter(t => t.id !== id);
+    renderTripList();
+    renderStats();
+    renderTopFlies();
+    renderHatchChart();
+  } else {
+    alert('Could not delete trip — please try again.');
+  }
 }
 
 // ── EDIT PROFILE ──

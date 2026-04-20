@@ -1378,7 +1378,7 @@ async function doAutofill() {
   // ── 2. USGS: nearest stream gauge — flow (cfs) + water temp ──
   try {
     const usgsUrl = `https://waterservices.usgs.gov/nwis/iv/?format=json` +
-      `&bBox=${(lng-0.6).toFixed(4)},${(lat-0.6).toFixed(4)},${(lng+0.6).toFixed(4)},${(lat+0.6).toFixed(4)}` +
+      `&bBox=${(lng-0.3).toFixed(4)},${(lat-0.3).toFixed(4)},${(lng+0.3).toFixed(4)},${(lat+0.3).toFixed(4)}` +
       `&parameterCd=00060,00010&siteStatus=active&siteType=ST&period=PT2H`;
 
     console.log('📍 USGS URL:', usgsUrl);
@@ -1423,14 +1423,25 @@ async function doAutofill() {
     console.log('🗺️ Aggregated sites:');
     siteList.forEach(s => console.log(`  ${s.id} | ${s.name} | flow:${s.flow} cfs | temp:${s.temp}°C | ${(s.dist*69).toFixed(1)} mi away`));
 
-    const flowSites = siteList.filter(s => s.flow !== null && s.flow > 0 && s.dist < 0.6);
+    const flowSites = siteList.filter(s => s.flow !== null && s.flow > 0 && s.dist < 0.3);
     console.log(`✅ Flow sites in range: ${flowSites.length}`);
 
     if (flowSites.length === 0) {
-      console.warn('⚠️ No USGS flow sites found nearby');
+      // No nearby gauge with flow — hide the gauge row and skip CFS,
+      // but still fill in water temp if any site in the broader list has it
+      console.warn('⚠️ No USGS flow sites found nearby — skipping CFS, attempting water temp');
       document.getElementById('usgs-gauge-row').style.display = 'none';
+      const tempSite = siteList.filter(s => s.temp !== null).sort((a, b) => a.dist - b.dist)[0];
+      if (tempSite) {
+        const waterTempF = Math.round(tempSite.temp * 9/5 + 32);
+        const waterTempC = Math.round(tempSite.temp * 10) / 10;
+        document.getElementById('water-temp').value = currentUnit === 'F' ? waterTempF : waterTempC;
+        filled.push(`Water ${currentUnit === 'F' ? waterTempF + '°F' : waterTempC + '°C'}`);
+        console.log(`🌡️ Water temp from ${tempSite.id} (${(tempSite.dist*69).toFixed(1)} mi away)`);
+      }
     } else {
-      const best = flowSites.sort((a, b) => b.flow - a.flow)[0];
+      // Pick the closest gauge (not the highest-flow one)
+      const best = flowSites.sort((a, b) => a.dist - b.dist)[0];
       console.log(`🏆 Selected: ${best.id} | ${best.name} | ${best.flow} cfs`);
 
       document.getElementById('flow').value = Math.round(best.flow);
@@ -1447,7 +1458,7 @@ async function doAutofill() {
 
       let tempVal = best.temp;
       if (tempVal === null) {
-        const tempSite = siteList.filter(s => s.temp !== null).sort((a,b) => a.dist - b.dist)[0];
+        const tempSite = siteList.filter(s => s.temp !== null).sort((a, b) => a.dist - b.dist)[0];
         if (tempSite) tempVal = tempSite.temp;
       }
       if (tempVal !== null) {

@@ -9,6 +9,7 @@
 <title>Catskill Fly — Community</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
   :root {
     --forest:    #1a2e1a;
@@ -300,6 +301,35 @@
   }
   .report-location-name { font-family: var(--font-serif); font-size: 18px; font-weight: 600; margin-bottom: 2px; }
   .report-location-sub  { font-size: 12px; opacity: 0.75; }
+  /* Map picker inside report sheet */
+  #report-map {
+    width: 100%; height: 210px; border-radius: 10px;
+    border: 1px solid var(--border); margin: 10px 0 6px;
+    overflow: hidden;
+  }
+  .report-map-hint {
+    font-size: 12px; color: var(--stone); text-align: center; margin-bottom: 12px;
+  }
+  .report-map-hint span { color: var(--fern); font-weight: 500; }
+  /* AI forecast section */
+  .report-ai-card {
+    background: linear-gradient(135deg, #f0f5ee 0%, #e8f0f5 100%);
+    border: 1px solid rgba(61,107,54,0.2);
+    border-radius: 12px; padding: 14px 16px; margin-bottom: 18px;
+  }
+  .report-ai-title {
+    font-size: 11px; font-weight: 600; color: var(--fern);
+    text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px;
+    display: flex; align-items: center; gap: 5px;
+  }
+  .report-ai-text {
+    font-size: 14px; color: var(--ink); line-height: 1.7;
+    font-family: var(--font-sans);
+  }
+  .report-ai-loading {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 13px; color: var(--stone); font-style: italic;
+  }
 
   /* ── NAV BAR ── */
   .nav-bar { position:fixed; bottom:0; left:0; right:0; background:var(--card-bg); border-top:1px solid var(--border); display:flex; padding:10px 0 max(10px,env(safe-area-inset-bottom)); z-index:100; box-shadow:0 -4px 20px rgba(26,46,26,0.08); }
@@ -448,24 +478,32 @@
       <div class="sheet-close" onclick="closeSheet('report-overlay')">✕</div>
     </div>
     <div class="sheet-body" id="report-sheet-body">
-      <!-- Search state -->
+      <!-- Location picker -->
       <div id="report-search-state">
-        <label>River or location</label>
-        <div style="display:flex;gap:8px">
+        <label style="margin-bottom:6px">Search or tap the map to pin your spot</label>
+        <div style="display:flex;gap:8px;margin-bottom:0">
           <input type="text" id="report-location-input"
-            placeholder="e.g. Beaverkill, West Branch Delaware…"
+            placeholder="e.g. Esopus Creek, Beaverkill…"
             style="flex:1"
-            onkeydown="if(event.key==='Enter')generateReport()">
-          <button onclick="generateReport()" id="report-btn" style="
-            padding:11px 16px; background:var(--forest); color:white;
+            onkeydown="if(event.key==='Enter')searchReportLocation()">
+          <button onclick="searchReportLocation()" style="
+            padding:11px 14px; background:var(--moss); color:white;
             border:none; border-radius:10px; cursor:pointer;
             font-family:var(--font-sans); font-weight:500; font-size:14px; white-space:nowrap">
-            Get Report
+            Search
           </button>
         </div>
-        <p style="font-size:12px;color:var(--stone);margin-top:10px;line-height:1.6">
-          Pulls live USGS gauge data, today's weather, and recent catch reports from the community.
-        </p>
+        <!-- Leaflet map -->
+        <div id="report-map"></div>
+        <div class="report-map-hint" id="report-map-hint">Tap the map to drop a pin on the exact water you want to fish</div>
+        <button onclick="generateReport()" id="report-btn" disabled style="
+          width:100%; padding:14px; background:var(--forest); color:var(--cream);
+          font-family:var(--font-serif); font-size:16px; font-weight:600;
+          border:none; border-radius:12px; cursor:pointer; margin-top:4px;
+          box-shadow:0 4px 16px rgba(26,46,26,0.25); transition:opacity 0.2s;
+          opacity:0.45">
+          📍 Pin a location first
+        </button>
       </div>
       <!-- Results rendered here -->
       <div id="report-results" style="margin-top:16px"></div>
@@ -970,37 +1008,117 @@ const CATSKILL_HATCHES = {
         flies:   ['Midge #20–24', 'Zebra Midge', 'San Juan Worm #12', 'Streamer #6–8'] }
 };
 
+// ── Report map state ──
+let reportMap      = null;
+let reportMarker   = null;
+let reportPinLat   = null;
+let reportPinLng   = null;
+let reportPinLabel = null;
+
 function openReportSearch() {
   document.getElementById('report-location-input').value = '';
   document.getElementById('report-results').innerHTML = '';
   document.getElementById('report-overlay').classList.add('open');
-  setTimeout(() => document.getElementById('report-location-input').focus(), 350);
+
+  // Init the Leaflet map on first open
+  setTimeout(() => {
+    if (!reportMap) {
+      reportMap = L.map('report-map', { zoomControl: true, attributionControl: false })
+        .setView([42.0, -74.5], 8);
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+        maxZoom: 18
+      }).addTo(reportMap);
+
+      // Tap to pin
+      reportMap.on('click', e => {
+        setReportPin(e.latlng.lat, e.latlng.lng);
+        reverseGeocodeReportPin(e.latlng.lat, e.latlng.lng);
+      });
+    } else {
+      reportMap.invalidateSize();
+    }
+  }, 250);
+}
+
+function setReportPin(lat, lng) {
+  reportPinLat = lat;
+  reportPinLng = lng;
+  if (reportMarker) {
+    reportMarker.setLatLng([lat, lng]);
+  } else {
+    reportMarker = L.marker([lat, lng], { draggable: true }).addTo(reportMap);
+    reportMarker.on('dragend', e => {
+      const pos = e.target.getLatLng();
+      reportPinLat = pos.lat;
+      reportPinLng = pos.lng;
+      reverseGeocodeReportPin(pos.lat, pos.lng);
+    });
+  }
+  // Enable the Get Report button
+  const btn = document.getElementById('report-btn');
+  btn.disabled = false;
+  btn.style.opacity = '1';
+  btn.textContent = 'Get Report →';
+}
+
+async function reverseGeocodeReportPin(lat, lng) {
+  try {
+    const res  = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`);
+    const data = await res.json();
+    const addr = data.address || {};
+    const water = addr.water || addr.river || addr.stream || null;
+    const place = addr.hamlet || addr.village || addr.town || addr.city || addr.county || '';
+    reportPinLabel = water || place || `${lat.toFixed(4)}° N`;
+    // Fill search box with the water name if we got one
+    const input = document.getElementById('report-location-input');
+    if (!input.value && reportPinLabel) input.value = reportPinLabel;
+    document.getElementById('report-map-hint').innerHTML =
+      `<span>📍 ${reportPinLabel}</span> — drag the pin to adjust`;
+  } catch(e) {}
+}
+
+async function searchReportLocation() {
+  const query = document.getElementById('report-location-input').value.trim();
+  if (!query) return;
+  try {
+    const res  = await fetch(
+      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query + ' New York')}&format=json&limit=5`
+    );
+    const data = await res.json();
+    // Prefer water features, fall back to first result
+    const result = data.find(r => ['waterway','water','river','stream','natural'].some(t => r.type===t || r.class===t))
+      || data[0];
+    if (result) {
+      const lat = parseFloat(result.lat);
+      const lng = parseFloat(result.lon);
+      reportMap.flyTo([lat, lng], 13, { duration: 1 });
+      setReportPin(lat, lng);
+      reportPinLabel = result.display_name.split(',').slice(0,2).join(', ');
+      document.getElementById('report-map-hint').innerHTML =
+        `<span>📍 ${reportPinLabel}</span> — tap map or drag pin to adjust`;
+    } else {
+      document.getElementById('report-map-hint').textContent = 'Location not found — try tapping the map directly.';
+    }
+  } catch(e) {
+    document.getElementById('report-map-hint').textContent = 'Search failed — try tapping the map.';
+  }
 }
 
 async function generateReport() {
-  const query = document.getElementById('report-location-input').value.trim();
-  if (!query) return;
+  if (!reportPinLat || !reportPinLng) return;
 
+  const query   = document.getElementById('report-location-input').value.trim() || reportPinLabel || 'Selected location';
   const btn     = document.getElementById('report-btn');
   const results = document.getElementById('report-results');
   btn.disabled  = true;
+  btn.style.opacity = '0.6';
   btn.textContent = 'Loading…';
   results.innerHTML = `<div class="loading" style="border:none;padding:20px 0"><div class="spinner"></div>Pulling conditions & community data…</div>`;
 
   try {
-    // ── 1. Geocode location ──
-    let lat = null, lng = null, displayName = query;
-    try {
-      const geoRes  = await fetch(
-        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query + ' river New York')}&format=json&limit=1`
-      );
-      const geoData = await geoRes.json();
-      if (geoData.length) {
-        lat = parseFloat(geoData[0].lat);
-        lng = parseFloat(geoData[0].lon);
-        displayName = geoData[0].display_name.split(',').slice(0,2).join(', ');
-      }
-    } catch(e) { console.warn('Geocode failed:', e); }
+    const lat = reportPinLat;
+    const lng = reportPinLng;
+    const displayName = reportPinLabel || query;
 
     // ── 2. USGS gauge (flow + water temp) ──
     let usgsFlow = null, usgsTemp = null, usgsGaugeName = null, usgsGaugeId = null;
@@ -1118,20 +1236,85 @@ async function generateReport() {
     const month  = new Date().getMonth() + 1;
     const season = CATSKILL_HATCHES[month];
 
-    // ── Render the report ──
-    renderReport({ query, displayName, lat, lng,
+    const reportData = { query, displayName, lat, lng,
       usgsFlow, usgsTemp, usgsGaugeName, usgsGaugeId,
       airTemp, sky, windMph,
       trips, totalFish, topFish, topFlies, topHatches,
-      checkins, season, month });
+      checkins, season, month };
+
+    // ── Render data sections immediately ──
+    renderReport(reportData);
+
+    // ── Then stream in AI forecast asynchronously ──
+    generateAIForecast(reportData);
 
   } catch(err) {
     results.innerHTML = `<div class="empty-state"><h3>Couldn't generate report</h3><p>Check your connection and try again.</p></div>`;
     console.error(err);
   }
 
-  btn.disabled    = false;
-  btn.textContent = 'Get Report';
+  btn.disabled      = false;
+  btn.style.opacity = '1';
+  btn.textContent   = 'Get Report →';
+}
+
+// ── AI Forecast via Pollinations.ai (free, no key required) ──
+async function generateAIForecast(d) {
+  const monthName = ['January','February','March','April','May','June','July','August','September','October','November','December'][d.month-1];
+
+  const condLines = [
+    d.usgsFlow  !== null ? `Flow: ${d.usgsFlow} cfs`         : null,
+    d.usgsTemp  !== null ? `Water temp: ${d.usgsTemp}°F`     : null,
+    d.airTemp   !== null ? `Air temp: ${d.airTemp}°F`        : null,
+    d.sky                ? `Sky: ${d.sky}`                   : null,
+    d.windMph   !== null ? `Wind: ${d.windMph} mph`          : null,
+  ].filter(Boolean).join('\n');
+
+  const commLines = d.trips.length ? [
+    `${d.trips.length} public trip${d.trips.length>1?'s':''} logged in the past 30 days`,
+    d.totalFish > 0 ? `${d.totalFish} fish caught total` : null,
+    d.topFish.length   ? `Top species: ${d.topFish.map(([s,c])=>`${c} ${s}`).join(', ')}` : null,
+    d.topFlies.length  ? `Flies working: ${d.topFlies.join(', ')}`  : null,
+    d.topHatches.length? `Hatches reported: ${d.topHatches.join(', ')}` : null,
+  ].filter(Boolean).join('\n') : 'No recent community trip data for this water.';
+
+  const prompt =
+`Write a practical daily fishing report for ${d.query} in the Catskills, NY for ${monthName} ${new Date().getFullYear()}.
+
+${condLines ? 'Live conditions:\n' + condLines : 'Conditions data not available.'}
+
+Seasonal context for ${monthName}:
+Expected hatches: ${d.season.hatches.join(', ')}
+Go-to patterns: ${d.season.flies.join(', ')}
+
+Community data (last 30 days):
+${commLines}
+
+Write 2–3 short paragraphs in the voice of a knowledgeable local guide. Be specific: mention timing, tactics, water levels, and which fly patterns to reach for. Keep it under 180 words. No preamble — start directly with the report.`;
+
+  const aiForecastEl = document.getElementById('report-ai-forecast-text');
+  if (!aiForecastEl) return;
+
+  try {
+    const res = await fetch('https://text.pollinations.ai/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        messages: [
+          { role: 'system', content: 'You are an expert Catskill fly fishing guide. Write concise, practical fishing reports for local rivers. Use specific local knowledge.' },
+          { role: 'user',   content: prompt }
+        ],
+        model: 'openai',
+        seed:  Date.now() % 9999
+      })
+    });
+    if (!res.ok) throw new Error('AI request failed');
+    const text = await res.text();
+    aiForecastEl.innerHTML = `<div class="report-ai-text">${text.trim().replace(/\n\n/g,'</p><p>').replace(/\n/g,'<br>')}</div>`;
+  } catch(e) {
+    aiForecastEl.innerHTML = `<div class="report-ai-text" style="color:var(--stone);font-style:italic">AI forecast unavailable — see conditions and community data below.</div>`;
+    console.warn('AI forecast failed:', e);
+  }
 }
 
 function renderReport(d) {
@@ -1143,6 +1326,21 @@ function renderReport(d) {
     <div class="report-location-header">
       <div class="report-location-name">📍 ${d.query}</div>
       <div class="report-location-sub">${d.displayName !== d.query ? d.displayName + ' · ' : ''}${monthNames[d.month-1]} ${new Date().getFullYear()}</div>
+    </div>`;
+
+  // ── AI Forecast card (populated async by generateAIForecast) ──
+  html += `
+    <div class="report-ai-card">
+      <div class="report-ai-title">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        AI Daily Forecast
+      </div>
+      <div id="report-ai-forecast-text">
+        <div style="display:flex;align-items:center;gap:8px;color:var(--stone);font-size:13px">
+          <div class="spinner" style="width:14px;height:14px;border-width:2px;flex-shrink:0"></div>
+          Generating forecast…
+        </div>
+      </div>
     </div>`;
 
   // ── Current Conditions ──
@@ -1252,5 +1450,6 @@ function renderReport(d) {
 // ── INIT ──
 fetchPosts();
 </script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </body>
 </html>

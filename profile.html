@@ -419,6 +419,153 @@
   }
   .send-req-btn:disabled { background: var(--mist); color: var(--stone); }
 
+  /* ── PROFILE TABS ── */
+  .profile-tabs {
+    display: flex;
+    gap: 0;
+    background: var(--parchment);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 3px;
+    margin-bottom: 20px;
+  }
+  .profile-tab {
+    flex: 1; text-align: center;
+    padding: 8px 6px;
+    font-size: 13px; font-weight: 500;
+    color: var(--stone);
+    border-radius: 9px;
+    cursor: pointer;
+    transition: background 0.18s, color 0.18s;
+    user-select: none;
+  }
+  .profile-tab.active {
+    background: var(--card-bg);
+    color: var(--forest);
+    box-shadow: 0 1px 6px rgba(26,46,26,0.10);
+    font-weight: 600;
+  }
+
+  /* ── SEASON DASHBOARD ── */
+  .season-scope {
+    font-size: 11px; color: var(--stone);
+    text-align: right; margin-top: -14px; margin-bottom: 14px;
+    text-transform: uppercase; letter-spacing: 0.05em;
+  }
+  .season-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 16px 14px;
+    margin-bottom: 14px;
+  }
+  .season-card-title {
+    font-family: var(--font-serif);
+    font-size: 15px; font-weight: 600;
+    color: var(--forest);
+    margin-bottom: 14px;
+  }
+  .season-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+  .season-stat {
+    background: var(--parchment);
+    border-radius: 10px;
+    padding: 12px 8px;
+    text-align: center;
+  }
+  .season-stat-val {
+    font-family: var(--font-serif);
+    font-size: 22px; font-weight: 600;
+    color: var(--forest);
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .season-stat-key {
+    font-size: 10px; color: var(--stone);
+    text-transform: uppercase; letter-spacing: 0.05em;
+  }
+  .season-best-water {
+    margin-top: 12px;
+    padding: 10px 12px;
+    background: var(--parchment);
+    border-radius: 10px;
+    font-size: 13px; color: var(--stone);
+  }
+  .season-best-water strong { color: var(--forest); font-weight: 600; }
+
+  /* Month bar chart */
+  .month-chart {
+    display: flex;
+    align-items: flex-end;
+    gap: 4px;
+    height: 72px;
+    margin-bottom: 6px;
+  }
+  .month-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    height: 100%;
+    justify-content: flex-end;
+  }
+  .month-bar {
+    width: 100%;
+    background: var(--fern);
+    border-radius: 3px 3px 0 0;
+    min-height: 3px;
+    transition: height 0.4s ease;
+  }
+  .month-bar.empty { background: var(--parchment); opacity: 0.5; }
+  .month-lbl {
+    font-size: 8px; color: var(--stone);
+    text-transform: uppercase; letter-spacing: 0.03em;
+    text-align: center;
+  }
+  .month-lbl.current { color: var(--fern); font-weight: 600; }
+
+  /* Species breakdown */
+  .species-row {
+    display: flex; align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    gap: 10px;
+  }
+  .species-row:last-child { border-bottom: none; }
+  .species-name { flex: 1; font-size: 14px; color: var(--ink); font-weight: 500; }
+  .species-bar-wrap { width: 70px; height: 5px; background: var(--parchment); border-radius: 3px; }
+  .species-bar { height: 100%; background: var(--water); border-radius: 3px; }
+  .species-ct { font-size: 13px; color: var(--water); font-weight: 500; min-width: 24px; text-align: right; }
+
+  /* Biggest fish card */
+  .biggest-fish-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 0; border-bottom: 1px solid var(--border);
+  }
+  .biggest-fish-row:last-child { border-bottom: none; }
+  .bf-species { flex: 1; font-size: 13px; color: var(--stone); }
+  .bf-size { font-size: 14px; font-weight: 600; color: var(--forest); }
+
+  /* Rivers list */
+  .river-pill {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: var(--parchment);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 5px 12px;
+    font-size: 13px; color: var(--ink); font-weight: 500;
+    margin: 0 5px 6px 0;
+  }
+  .river-pill .river-ct {
+    font-size: 11px; color: var(--stone); font-weight: 400;
+  }
+
   /* ── NAV BAR ── */
   .nav-bar {
     position: fixed; bottom: 0; left: 0; right: 0;
@@ -467,6 +614,16 @@
 
 <div class="page-body">
 
+  <!-- TABS -->
+  <div class="profile-tabs">
+    <div class="profile-tab active" id="tab-overview" onclick="switchTab('overview')">Overview</div>
+    <div class="profile-tab" id="tab-season" onclick="switchTab('season')">Season</div>
+    <div class="profile-tab" id="tab-trips" onclick="switchTab('trips')">My Trips</div>
+  </div>
+
+  <!-- ══ PANEL: OVERVIEW ══ -->
+  <div id="panel-overview">
+
   <!-- STATS -->
   <div class="stats-row">
     <div class="stat-card"><div class="stat-num" id="stat-trips">—</div><div class="stat-label">Trips</div></div>
@@ -499,17 +656,30 @@
     <div class="loading"><div class="spinner"></div></div>
   </div>
 
-  <!-- MY TRIPS -->
-  <div class="section-heading" style="margin-top:6px">
-    <h2>My trips</h2>
-    <span id="trip-count" style="font-size:12px;color:var(--stone)"></span>
-  </div>
-  <div class="trip-list" id="trip-list">
-    <div class="loading"><div class="spinner"></div>Loading your trips…</div>
-  </div>
-
   <button class="signout-btn" onclick="resetPassword()">Change password</button>
   <button class="signout-btn" onclick="signOut()" style="margin-top:6px">Sign out</button>
+
+  </div><!-- /panel-overview -->
+
+  <!-- ══ PANEL: SEASON ══ -->
+  <div id="panel-season" style="display:none">
+    <div class="season-scope" id="season-scope-label"></div>
+    <!-- Cards rendered by renderSeasonDashboard() -->
+    <div id="season-content">
+      <div class="loading"><div class="spinner"></div>Crunching your season…</div>
+    </div>
+  </div>
+
+  <!-- ══ PANEL: MY TRIPS ══ -->
+  <div id="panel-trips" style="display:none">
+    <div class="section-heading">
+      <h2>My trips</h2>
+      <span id="trip-count" style="font-size:12px;color:var(--stone)"></span>
+    </div>
+    <div class="trip-list" id="trip-list">
+      <div class="loading"><div class="spinner"></div>Loading your trips…</div>
+    </div>
+  </div>
 
 </div>
 
@@ -1163,6 +1333,192 @@ async function sendResetEmail() {
     errEl.textContent = 'Could not send reset email. Try again.';
     errEl.style.display = 'block';
   }
+}
+
+// ── TAB SWITCHING ──
+function switchTab(name) {
+  ['overview','season','trips'].forEach(t => {
+    document.getElementById('panel-' + t).style.display = (t === name) ? '' : 'none';
+    document.getElementById('tab-' + t).classList.toggle('active', t === name);
+  });
+  if (name === 'season') renderSeasonDashboard();
+}
+
+// ── SEASON DASHBOARD ──
+function renderSeasonDashboard() {
+  const el = document.getElementById('season-content');
+
+  // Rolling 12 months window
+  const now   = new Date();
+  const cutoff = new Date(now);
+  cutoff.setFullYear(cutoff.getFullYear() - 1);
+
+  const scopeTrips = myTrips.filter(t => {
+    if (!t.trip_date) return false;
+    return new Date(t.trip_date + 'T12:00:00') >= cutoff;
+  });
+
+  // Scope label
+  const fmt = d => d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+  document.getElementById('season-scope-label').textContent =
+    fmt(cutoff) + ' – ' + fmt(now);
+
+  // ── Days fished & rivers ──
+  const riverCounts = {};
+  scopeTrips.forEach(t => {
+    if (t.river) riverCounts[t.river] = (riverCounts[t.river] || 0) + 1;
+  });
+  const sortedRivers = Object.entries(riverCounts).sort((a,b) => b[1]-a[1]);
+  const topRiver = sortedRivers[0];
+
+  // ── Monthly bar chart (last 12 months) ──
+  const monthLabels = ['J','F','M','A','M','J','J','A','S','O','N','D'];
+  const monthCounts = new Array(12).fill(0);
+  scopeTrips.forEach(t => {
+    if (!t.trip_date) return;
+    const d = new Date(t.trip_date + 'T12:00:00');
+    monthCounts[d.getMonth()]++;
+  });
+  // Build ordered array for last 12 months
+  const chartMonths = [];
+  for (let i = 11; i >= 0; i--) {
+    const d = new Date(now);
+    d.setMonth(d.getMonth() - i);
+    chartMonths.push({ mo: d.getMonth(), label: monthLabels[d.getMonth()], isCurrent: i === 0 });
+  }
+  const maxMonthCount = Math.max(...chartMonths.map(m => monthCounts[m.mo]), 1);
+
+  // ── Fish by species ──
+  let totalFish = 0;
+  const speciesCounts = {};
+  const speciesSizes  = {}; // species -> [{length, weight}]
+
+  scopeTrips.forEach(t => {
+    if (t.fish_counts) {
+      Object.entries(t.fish_counts).forEach(([sp, ct]) => {
+        const n = parseInt(ct) || 0;
+        speciesCounts[sp] = (speciesCounts[sp] || 0) + n;
+        totalFish += n;
+      });
+    }
+    if (t.fish_sizes) {
+      Object.entries(t.fish_sizes).forEach(([sp, arr]) => {
+        if (!speciesSizes[sp]) speciesSizes[sp] = [];
+        (arr || []).forEach(f => { if (f) speciesSizes[sp].push(f); });
+      });
+    }
+  });
+
+  const sortedSpecies = Object.entries(speciesCounts).sort((a,b) => b[1]-a[1]);
+  const maxSpeciesCt  = sortedSpecies[0]?.[1] || 1;
+
+  // ── Biggest catch per species ──
+  const biggestBySpecies = [];
+  Object.entries(speciesSizes).forEach(([sp, arr]) => {
+    const withLen = arr.filter(f => f.length != null);
+    if (!withLen.length) return;
+    const biggest = withLen.reduce((a,b) => b.length > a.length ? b : a);
+    biggestBySpecies.push({ sp, length: biggest.length, weight: biggest.weight });
+  });
+  biggestBySpecies.sort((a,b) => b.length - a.length);
+
+  // ── Build HTML ──
+  if (scopeTrips.length === 0) {
+    el.innerHTML = `<div style="text-align:center;padding:40px 20px;color:var(--stone);background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius)">
+      <div style="font-size:28px;margin-bottom:10px">🎣</div>
+      <div style="font-size:14px">No trips in the last 12 months.<br>Head to the river and log your first one!</div>
+    </div>`;
+    return;
+  }
+
+  let html = '';
+
+  // Card 1 – Days & Rivers
+  html += `<div class="season-card">
+    <div class="season-card-title">Days on the Water</div>
+    <div class="season-stat-grid">
+      <div class="season-stat">
+        <div class="season-stat-val">${scopeTrips.length}</div>
+        <div class="season-stat-key">Days out</div>
+      </div>
+      <div class="season-stat">
+        <div class="season-stat-val">${sortedRivers.length}</div>
+        <div class="season-stat-key">Rivers</div>
+      </div>
+      <div class="season-stat">
+        <div class="season-stat-val">${totalFish || '—'}</div>
+        <div class="season-stat-key">Fish</div>
+      </div>
+    </div>`;
+
+  if (topRiver) {
+    html += `<div class="season-best-water">
+      🏆 Most fished: <strong>${topRiver[0]}</strong>
+      <span style="color:var(--stone);font-size:12px"> · ${topRiver[1]} trip${topRiver[1]!==1?'s':''}</span>
+    </div>`;
+  }
+  html += `</div>`;
+
+  // Card 2 – Monthly chart
+  html += `<div class="season-card">
+    <div class="season-card-title">Activity by Month</div>
+    <div class="month-chart">`;
+  chartMonths.forEach(m => {
+    const ct = monthCounts[m.mo];
+    const pct = Math.round(ct / maxMonthCount * 100);
+    html += `<div class="month-col">
+      <div class="month-bar${ct===0?' empty':''}" style="height:${Math.max(pct,4)}%"
+           title="${ct} trip${ct!==1?'s':''}"></div>
+      <div class="month-lbl${m.isCurrent?' current':''}">${m.label}</div>
+    </div>`;
+  });
+  html += `</div></div>`;
+
+  // Card 3 – Fish by species
+  if (sortedSpecies.length > 0) {
+    html += `<div class="season-card">
+      <div class="season-card-title">Fish by Species</div>`;
+    sortedSpecies.forEach(([sp, ct]) => {
+      html += `<div class="species-row">
+        <div class="species-name">${sp}</div>
+        <div class="species-bar-wrap"><div class="species-bar" style="width:${Math.round(ct/maxSpeciesCt*100)}%"></div></div>
+        <div class="species-ct">${ct}</div>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  // Card 4 – Biggest fish
+  if (biggestBySpecies.length > 0) {
+    html += `<div class="season-card">
+      <div class="season-card-title">Personal Bests (last 12 mo)</div>`;
+    biggestBySpecies.forEach(({ sp, length, weight }) => {
+      const parts = [];
+      if (length != null) parts.push(`${length}"`);
+      if (weight != null) parts.push(`${weight} lb`);
+      html += `<div class="biggest-fish-row">
+        <div class="bf-species">${sp}</div>
+        <div class="bf-size">${parts.join(' · ')}</div>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  // Card 5 – All rivers fished
+  if (sortedRivers.length > 1) {
+    html += `<div class="season-card">
+      <div class="season-card-title">Waters Fished</div>
+      <div style="display:flex;flex-wrap:wrap;margin-top:4px">`;
+    sortedRivers.forEach(([river, ct]) => {
+      html += `<div class="river-pill">
+        🎣 ${river}
+        <span class="river-ct">${ct}×</span>
+      </div>`;
+    });
+    html += `</div></div>`;
+  }
+
+  el.innerHTML = html;
 }
 
 init();

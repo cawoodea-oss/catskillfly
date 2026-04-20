@@ -1125,6 +1125,7 @@ addFly(); // start with one
 // Fish counters
 const speciesOptions = ['Brown trout','Rainbow trout','Brook trout','Cutthroat','Smallmouth bass','Steelhead','Atlantic salmon','Other'];
 let fishCounts = {};
+let fishSizes  = {};   // { "Brown trout": [12, 14, 9], … }
 function addSpecies() {
   const sheet = document.createElement('div');
   sheet.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:999;display:flex;align-items:flex-end;';
@@ -1145,20 +1146,38 @@ function addSpecies() {
 function addSpeciesCounter(name) {
   if (fishCounts[name] !== undefined) return;
   fishCounts[name] = 0;
+  fishSizes[name]  = [];
+  const safeId = name.replace(/\s/g,'-');
   const container = document.getElementById('fish-counters');
-  const row = document.createElement('div');
-  row.className = 'fish-row';
-  row.id = 'species-'+name.replace(/\s/g,'-');
-  row.innerHTML = `
-    <button class="fish-btn" onclick="changeCount('${name}',-1)">−</button>
-    <span class="fish-label">${name}</span>
-    <span class="fish-count" id="count-${name.replace(/\s/g,'-')}">0</span>
-    <button class="fish-btn" onclick="changeCount('${name}',1)">+</button>`;
-  container.appendChild(row);
+  const wrap = document.createElement('div');
+  wrap.id = 'species-wrap-' + safeId;
+  wrap.innerHTML = `
+    <div class="fish-row" id="species-${safeId}">
+      <button class="fish-btn" onclick="changeCount('${name}',-1)">−</button>
+      <span class="fish-label">${name}</span>
+      <span class="fish-count" id="count-${safeId}">0</span>
+      <button class="fish-btn" onclick="changeCount('${name}',1)">+</button>
+    </div>
+    <div class="fish-sizes-row" id="sizes-row-${safeId}" style="display:none;padding:4px 4px 8px 4px">
+      <input type="text" id="sizes-${safeId}"
+        placeholder="Sizes in inches, e.g. 12, 14, 9"
+        style="font-size:13px;color:var(--stone)"
+        oninput="parseSizes('${name}', this.value)">
+    </div>`;
+  container.appendChild(wrap);
 }
 function changeCount(name, delta) {
   fishCounts[name] = Math.max(0, (fishCounts[name]||0) + delta);
-  document.getElementById('count-'+name.replace(/\s/g,'-')).textContent = fishCounts[name];
+  const safeId = name.replace(/\s/g,'-');
+  document.getElementById('count-' + safeId).textContent = fishCounts[name];
+  // Show/hide the sizes input based on whether any fish were caught
+  const sizesRow = document.getElementById('sizes-row-' + safeId);
+  if (sizesRow) sizesRow.style.display = fishCounts[name] > 0 ? 'block' : 'none';
+}
+function parseSizes(name, val) {
+  fishSizes[name] = val.split(',')
+    .map(s => parseFloat(s.trim()))
+    .filter(n => !isNaN(n) && n > 0);
 }
 addSpeciesCounter('Brown trout');
 addSpeciesCounter('Rainbow trout');
@@ -1635,6 +1654,7 @@ async function submitLog() {
     tippet_material:     document.getElementById('tippet-mat').value  || null,
     flies_used:          fliesUsed.length ? fliesUsed : null,
     fish_counts:         Object.keys(fishCounts).length ? fishCounts : null,
+    fish_sizes:          Object.values(fishSizes).some(a => a.length > 0) ? fishSizes : null,
     biggest_fish_length: document.getElementById('fish-length').value || null,
     biggest_fish_weight: document.getElementById('fish-weight').value || null,
     fishing_method:      (() => {
@@ -1651,14 +1671,19 @@ async function submitLog() {
     usgs_site_id:        window._usgsSiteId   || null
   };
 
-  // ── Send to Supabase ──
-  btn.textContent = 'Saving your trip…';
+  // ── Send to Supabase (POST for new, PATCH for edits) ──
+  const isEdit = !!window._editLogId;
+  const apiUrl = isEdit
+    ? `${SUPABASE_URL}/rest/v1/trip_logs?id=eq.${window._editLogId}`
+    : `${SUPABASE_URL}/rest/v1/trip_logs`;
+
+  btn.textContent = isEdit ? 'Saving changes…' : 'Saving your trip…';
   btn.style.background = 'var(--fern)';
   btn.disabled = true;
 
   try {
-    const response = await fetch(`${SUPABASE_URL}/rest/v1/trip_logs`, {
-      method: 'POST',
+    const response = await fetch(apiUrl, {
+      method: isEdit ? 'PATCH' : 'POST',
       headers: {
         'Content-Type':  'application/json',
         'apikey':        SUPABASE_KEY,
@@ -1673,18 +1698,21 @@ async function submitLog() {
       throw new Error(err);
     }
 
-    btn.textContent = '✓ Trip logged! Tight lines.';
+    btn.textContent = isEdit ? '✓ Changes saved!' : '✓ Trip logged! Tight lines.';
     btn.style.background = 'var(--water)';
     uploadedPhotoUrls = [];
 
-    // ── Full form reset ──
+    // ── Full form reset or redirect back to log ──
     setTimeout(() => {
-      resetForm();
-      btn.textContent = 'Post this trip →';
-      btn.style.background = 'var(--forest)';
-      btn.disabled = false;
-      // Scroll back to top
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      if (isEdit) {
+        window.location.href = 'index.html';
+      } else {
+        resetForm();
+        btn.textContent = 'Post this trip →';
+        btn.style.background = 'var(--forest)';
+        btn.disabled = false;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
     }, 2500);
 
   } catch (err) {
@@ -1727,8 +1755,9 @@ function resetForm() {
   flyCount = 0;
   addFly();
 
-  // Reset fish counters
+  // Reset fish counters and sizes
   fishCounts = {};
+  fishSizes  = {};
   document.getElementById('fish-counters').innerHTML = '';
   addSpeciesCounter('Brown trout');
   addSpeciesCounter('Rainbow trout');
@@ -1759,6 +1788,195 @@ function resetForm() {
   pickedLat = null;
   pickedLng = null;
 }
+
+// ── EDIT MODE ──
+// Activated when the page is loaded with ?edit=<logId> in the URL.
+// Fetches the existing log, verifies ownership, and pre-populates the form.
+
+window._editLogId = null;
+
+function activateChip(text, scopeEl) {
+  // Find a chip matching text (exact or contains) within scopeEl, activate it.
+  const chips = (scopeEl || document).querySelectorAll('.chip');
+  chips.forEach(c => {
+    if (c.textContent.trim() === text) c.classList.add('active');
+  });
+}
+
+async function initEditMode() {
+  const params  = new URLSearchParams(window.location.search);
+  const editId  = params.get('edit');
+  if (!editId) return;
+
+  // Wait for session to be ready
+  if (!currentSession?.access_token) return;
+
+  // Fetch the log
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/trip_logs?id=eq.${editId}&select=*`,
+    { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + currentSession.access_token } }
+  );
+  const rows = await res.json();
+  const log  = rows?.[0];
+  if (!log) { alert('Log not found.'); return; }
+
+  // Ownership check
+  if (log.user_id && log.user_id !== currentSession.user?.id) {
+    alert('You can only edit your own trips.');
+    window.location.href = 'index.html';
+    return;
+  }
+
+  window._editLogId = editId;
+
+  // ── Simple text fields ──
+  const setText = (id, val) => { const el = document.getElementById(id); if (el && val != null) el.value = val; };
+  setText('river',     log.river);
+  setText('section',   log.section);
+  setText('trip-date', log.trip_date);
+  setText('start-time',log.start_time);
+  setText('end-time',  log.end_time);
+  setText('air-temp',  log.air_temp);
+  setText('water-temp',log.water_temp);
+  setText('flow',      log.flow_cfs);
+  setText('fish-length', log.biggest_fish_length);
+  setText('fish-weight', log.biggest_fish_weight);
+  setText('notes',     log.trip_notes);
+  setText('fly-line',  log.fly_line);
+  setText('line-wt',   log.line_weight);
+  setText('leader',    log.leader_length);
+  setText('tippet',    log.tippet_size);
+  setText('tippet-mat',log.tippet_material);
+  setText('hatch-notes',log.hatch_notes);
+
+  // ── GPS ──
+  if (log.latitude && log.longitude) {
+    window._lat = log.latitude;
+    window._lng = log.longitude;
+    document.getElementById('location-text').textContent = `${parseFloat(log.latitude).toFixed(4)}° N`;
+  }
+
+  // ── Sky chips (multi-select) ──
+  const skyContainer = document.getElementById('sky-chips');
+  (log.sky || []).forEach(s => activateChip(s, skyContainer));
+
+  // ── Exclusive chips by label text ──
+  function activateExclusiveChipInSection(sectionIndex, labelText, value) {
+    const sections = document.querySelectorAll('.section-body');
+    const sec = sections[sectionIndex];
+    if (!sec) return;
+    sec.querySelectorAll('.chip-row').forEach(row => {
+      row.querySelectorAll('.chip').forEach(c => {
+        if (c.textContent.trim() === value) c.classList.add('active');
+      });
+    });
+  }
+
+  if (log.water_clarity) activateChip(log.water_clarity);
+  if (log.barometric_pressure) activateChip(log.barometric_pressure);
+  if (log.fishing_method) activateChip(log.fishing_method);
+  if (log.hatch_intensity) activateChip(log.hatch_intensity);
+  if (log.hatch_timing)    activateChip(log.hatch_timing);
+  if (log.visibility)      activateChip(log.visibility);
+  if (log.spot_precision)  activateChip(log.spot_precision);
+
+  // ── Hatch chips (amber, multi-select) ──
+  (log.hatches || []).forEach(h => {
+    document.querySelectorAll('.chip-amber').forEach(c => {
+      if (c.textContent.trim() === h) c.classList.add('active');
+    });
+  });
+
+  // ── Wind slider ──
+  if (log.wind) {
+    const windLabels = ['Calm','Light','Moderate','Strong','Very windy'];
+    const idx = windLabels.indexOf(log.wind);
+    if (idx >= 0) {
+      document.getElementById('wind-val').textContent = log.wind;
+      const range = document.getElementById('wind-range');
+      range.value = idx;
+      range.style.setProperty('--val', (idx / 4 * 100) + '%');
+    }
+  }
+
+  // ── Stars / rating ──
+  if (log.rating) setRating(log.rating);
+
+  // ── Fish counters + sizes ──
+  fishCounts = {};
+  fishSizes  = {};
+  document.getElementById('fish-counters').innerHTML = '';
+  if (log.fish_counts) {
+    Object.entries(log.fish_counts).forEach(([sp, ct]) => {
+      addSpeciesCounter(sp);
+      fishCounts[sp] = parseInt(ct) || 0;
+      const safeId = sp.replace(/\s/g,'-');
+      document.getElementById('count-' + safeId).textContent = fishCounts[sp];
+      if (fishCounts[sp] > 0) {
+        const sizesRow = document.getElementById('sizes-row-' + safeId);
+        if (sizesRow) sizesRow.style.display = 'block';
+      }
+      // Restore sizes
+      if (log.fish_sizes && log.fish_sizes[sp]) {
+        fishSizes[sp] = log.fish_sizes[sp];
+        const sizesInput = document.getElementById('sizes-' + safeId);
+        if (sizesInput) sizesInput.value = log.fish_sizes[sp].join(', ');
+      }
+    });
+  }
+  // Ensure at least one default species shows if none were logged
+  if (!log.fish_counts || Object.keys(log.fish_counts).length === 0) {
+    addSpeciesCounter('Brown trout');
+    addSpeciesCounter('Rainbow trout');
+  }
+
+  // ── Flies ──
+  document.getElementById('fly-list').innerHTML = '';
+  flyCount = 0;
+  const flies = log.flies_used || [];
+  if (flies.length > 0) {
+    flies.forEach(f => {
+      addFly();
+      const cards   = document.querySelectorAll('#fly-list .fly-card');
+      const card    = cards[cards.length - 1];
+      const inputs  = card.querySelectorAll('input');
+      if (inputs[0]) inputs[0].value = f.pattern || '';
+      if (inputs[1]) inputs[1].value = f.size    || '';
+      if (inputs[2]) inputs[2].value = f.caught  || '0';
+      if (inputs[3]) inputs[3].value = f.notes   || '';
+    });
+  } else {
+    addFly();
+  }
+
+  // ── USGS gauge ──
+  if (log.usgs_site_name) {
+    window._usgsSiteName = log.usgs_site_name;
+    window._usgsSiteId   = log.usgs_site_id;
+    document.getElementById('usgs-gauge-name').textContent = log.usgs_site_name;
+    document.getElementById('usgs-gauge-id').textContent   = `Site #${log.usgs_site_id}`;
+    document.getElementById('usgs-gauge-link').href =
+      `https://waterdata.usgs.gov/monitoring-location/${log.usgs_site_id}/`;
+    document.getElementById('usgs-gauge-row').style.display = 'block';
+  }
+
+  // ── Update UI for edit context ──
+  document.querySelector('.submit-btn').textContent = 'Save changes →';
+  document.title = 'Edit Trip — CatskillFly';
+
+  // Add a visible banner so the user knows they're editing
+  const editBanner = document.createElement('div');
+  editBanner.style.cssText = `
+    background: var(--water, #3d7a9c); color: #fff; text-align: center;
+    padding: 10px 16px; font-size: 13px; font-weight: 600; letter-spacing: 0.02em;`;
+  editBanner.textContent = '✏️ Editing trip — make your changes and tap Save';
+  document.body.insertBefore(editBanner, document.body.firstChild);
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// Run edit mode init after the page JS has finished setting up
+setTimeout(initEditMode, 0);
 </script>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>

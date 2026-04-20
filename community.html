@@ -331,6 +331,125 @@
     font-size: 13px; color: var(--stone); font-style: italic;
   }
 
+  /* ── COMMUNITY TABS ── */
+  .comm-tabs {
+    display: flex; gap: 0;
+    background: var(--parchment); border: 1px solid var(--border);
+    border-radius: 12px; padding: 3px; margin-bottom: 16px;
+  }
+  .comm-tab {
+    flex: 1; text-align: center; padding: 8px 6px;
+    font-size: 13px; font-weight: 500; color: var(--stone);
+    border-radius: 9px; cursor: pointer;
+    transition: background 0.18s, color 0.18s; user-select: none;
+  }
+  .comm-tab.active {
+    background: var(--card-bg); color: var(--forest);
+    box-shadow: 0 1px 6px rgba(26,46,26,0.10); font-weight: 600;
+  }
+
+  /* ── GUIDE CARDS ── */
+  .guides-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .guides-title {
+    font-family: var(--font-serif); font-size: 17px; font-weight: 600; color: var(--forest);
+  }
+  .add-guide-btn {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: var(--forest); color: var(--cream);
+    font-size: 12px; font-weight: 500;
+    border: none; border-radius: 20px; padding: 7px 14px;
+    cursor: pointer; font-family: var(--font-sans);
+    transition: background 0.2s;
+  }
+  .add-guide-btn:active { background: var(--moss); }
+  .guide-card {
+    background: var(--card-bg); border: 1px solid var(--border);
+    border-radius: var(--radius); box-shadow: var(--shadow);
+    padding: 16px; margin-bottom: 12px; cursor: pointer;
+    transition: transform 0.15s;
+  }
+  .guide-card:active { transform: scale(0.99); }
+  .guide-card-top { display: flex; align-items: flex-start; gap: 12px; }
+  .guide-avatar {
+    width: 48px; height: 48px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--fern), var(--water));
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-serif); font-size: 20px; color: white; flex-shrink: 0;
+  }
+  .guide-card-info { flex: 1; min-width: 0; }
+  .guide-card-name {
+    font-family: var(--font-serif); font-size: 16px; font-weight: 600;
+    color: var(--forest); margin-bottom: 3px;
+  }
+  .guide-stars { display: flex; align-items: center; gap: 4px; margin-bottom: 5px; }
+  .guide-stars .star { font-size: 12px; color: #ddd; }
+  .guide-stars .star.lit { color: var(--amber); }
+  .guide-stars .rating-num { font-size: 12px; color: var(--stone); margin-left: 2px; }
+  .guide-card-bio {
+    font-size: 13px; color: var(--stone); line-height: 1.5;
+    margin-top: 8px;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .guide-rivers { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; }
+  .guide-river-pill {
+    font-size: 11px; color: var(--water); font-weight: 500;
+    background: rgba(42,74,94,0.08); border: 1px solid rgba(42,74,94,0.2);
+    border-radius: 12px; padding: 3px 9px;
+  }
+  .guide-contact-link {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 11px; color: var(--fern); margin-top: 8px;
+    text-decoration: none; font-weight: 500;
+  }
+
+  /* ── GUIDE DETAIL SHEET ── */
+  .guide-detail-avatar {
+    width: 64px; height: 64px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--fern), var(--water));
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-serif); font-size: 26px; color: white;
+    margin: 0 auto 12px;
+  }
+  .guide-detail-name {
+    font-family: var(--font-serif); font-size: 22px; font-weight: 600;
+    color: var(--forest); text-align: center; margin-bottom: 4px;
+  }
+  .guide-detail-stars { display: flex; justify-content: center; align-items: center; gap: 3px; margin-bottom: 12px; }
+  .guide-detail-bio { font-size: 14px; color: var(--stone); line-height: 1.6; margin-bottom: 14px; }
+  .guide-detail-section { margin-bottom: 14px; }
+  .guide-detail-label {
+    font-size: 11px; font-weight: 600; color: var(--stone);
+    text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px;
+  }
+  .review-item {
+    background: var(--parchment); border-radius: 10px;
+    padding: 12px; margin-bottom: 8px;
+  }
+  .review-item:last-child { margin-bottom: 0; }
+  .review-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 5px; }
+  .review-author { font-size: 13px; font-weight: 600; color: var(--forest); }
+  .review-date { font-size: 11px; color: var(--stone); }
+  .review-stars { display: flex; gap: 2px; margin-bottom: 6px; }
+  .review-stars .star { font-size: 12px; color: #ddd; }
+  .review-stars .star.lit { color: var(--amber); }
+  .review-text { font-size: 13px; color: var(--ink); line-height: 1.5; }
+  .write-review-btn {
+    width: 100%; padding: 13px; background: var(--forest); color: var(--cream);
+    font-family: var(--font-serif); font-size: 15px; font-weight: 600;
+    border: none; border-radius: 12px; cursor: pointer; margin-top: 4px;
+    transition: background 0.2s, transform 0.1s; box-shadow: 0 4px 14px rgba(26,46,26,0.22);
+  }
+  .write-review-btn:active { transform: scale(0.98); }
+
+  /* ── STAR PICKER ── */
+  .star-picker { display: flex; gap: 8px; margin-bottom: 2px; }
+  .star-pick { font-size: 28px; color: #ddd; cursor: pointer; transition: color 0.1s; user-select: none; }
+  .star-pick.lit { color: var(--amber); }
+  .star-pick:active { transform: scale(1.15); }
+
   /* ── NAV BAR ── */
   .nav-bar { position:fixed; bottom:0; left:0; right:0; background:var(--card-bg); border-top:1px solid var(--border); display:flex; padding:10px 0 max(10px,env(safe-area-inset-bottom)); z-index:100; box-shadow:0 -4px 20px rgba(26,46,26,0.08); }
   .nav-item { flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; font-size:10px; font-weight:500; color:var(--stone); text-decoration:none; cursor:pointer; transition:color 0.15s; letter-spacing:0.04em; text-transform:uppercase; }
@@ -360,26 +479,109 @@
 
 <div class="page-body">
 
-  <!-- FISHING REPORT FEATURE CARD -->
-  <div class="report-feature-card" onclick="openReportSearch()">
-    <div class="report-feature-icon">🎣</div>
-    <div class="report-feature-text">
-      <div class="report-feature-title">Get a Fishing Report</div>
-      <div class="report-feature-sub">Conditions, hatches & community intel for any water</div>
+  <!-- COMMUNITY TABS -->
+  <div class="comm-tabs">
+    <div class="comm-tab active" id="ctab-feed"   onclick="switchCommTab('feed')">Feed</div>
+    <div class="comm-tab"        id="ctab-guides" onclick="switchCommTab('guides')">Guides</div>
+  </div>
+
+  <!-- ══ PANEL: FEED ══ -->
+  <div id="cpanel-feed">
+    <!-- FISHING REPORT FEATURE CARD -->
+    <div class="report-feature-card" onclick="openReportSearch()">
+      <div class="report-feature-icon">🎣</div>
+      <div class="report-feature-text">
+        <div class="report-feature-title">Get a Fishing Report</div>
+        <div class="report-feature-sub">Conditions, hatches & community intel for any water</div>
+      </div>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
     </div>
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+
+    <div class="new-post-bar" onclick="openNewPost()">
+      <div class="avatar-sm" id="header-avatar">?</div>
+      <div class="new-post-prompt">Share something with the community…</div>
+      <button class="new-post-btn">Post</button>
+    </div>
+
+    <div class="post-list" id="post-list">
+      <div class="loading"><div class="spinner"></div>Loading community…</div>
+    </div>
   </div>
 
-  <div class="new-post-bar" onclick="openNewPost()">
-    <div class="avatar-sm" id="header-avatar">?</div>
-    <div class="new-post-prompt">Share something with the community…</div>
-    <button class="new-post-btn">Post</button>
+  <!-- ══ PANEL: GUIDES ══ -->
+  <div id="cpanel-guides" style="display:none">
+    <div class="guides-header">
+      <div class="guides-title">Local Guides</div>
+      <button class="add-guide-btn" onclick="openAddGuide()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Add guide
+      </button>
+    </div>
+    <div id="guide-list">
+      <div class="loading"><div class="spinner"></div>Loading guides…</div>
+    </div>
   </div>
 
-  <div class="post-list" id="post-list">
-    <div class="loading"><div class="spinner"></div>Loading community…</div>
-  </div>
+</div>
 
+<!-- ── ADD GUIDE SHEET ── -->
+<div class="sheet-overlay" id="add-guide-overlay" onclick="closeSheetIfBg(event,'add-guide-overlay')">
+  <div class="sheet">
+    <div class="sheet-handle"><div></div></div>
+    <div class="sheet-header">
+      <h3>Add a Guide</h3>
+      <div class="sheet-close" onclick="closeSheet('add-guide-overlay')">✕</div>
+    </div>
+    <div class="sheet-body">
+      <label>Guide name</label>
+      <input type="text" id="guide-name" placeholder="Full name">
+      <label>Short bio / specialty</label>
+      <textarea id="guide-bio" placeholder="Describe their specialty, experience, or style…" style="min-height:80px"></textarea>
+      <label>Rivers they guide <span style="font-weight:400;text-transform:none;font-size:11px">(comma-separated)</span></label>
+      <input type="text" id="guide-rivers" placeholder="e.g. Beaverkill, Willowemoc, Esopus">
+      <label>Website or booking link <span style="font-weight:400;text-transform:none;font-size:11px">(optional)</span></label>
+      <input type="url" id="guide-contact" placeholder="https://…">
+      <button class="save-btn" onclick="submitGuide()">Add guide</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── GUIDE DETAIL SHEET ── -->
+<div class="sheet-overlay" id="guide-detail-overlay" onclick="closeSheetIfBg(event,'guide-detail-overlay')">
+  <div class="sheet">
+    <div class="sheet-handle"><div></div></div>
+    <div class="sheet-header">
+      <h3 id="guide-detail-heading">Guide</h3>
+      <div class="sheet-close" onclick="closeSheet('guide-detail-overlay')">✕</div>
+    </div>
+    <div class="sheet-body" id="guide-detail-body">
+      <div class="loading"><div class="spinner"></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── ADD REVIEW SHEET ── -->
+<div class="sheet-overlay" id="add-review-overlay" onclick="closeSheetIfBg(event,'add-review-overlay')">
+  <div class="sheet">
+    <div class="sheet-handle"><div></div></div>
+    <div class="sheet-header">
+      <h3>Write a Review</h3>
+      <div class="sheet-close" onclick="closeSheet('add-review-overlay')">✕</div>
+    </div>
+    <div class="sheet-body">
+      <label>Your rating</label>
+      <div class="star-picker" id="review-star-picker">
+        <span class="star-pick" onclick="setReviewRating(1)">★</span>
+        <span class="star-pick" onclick="setReviewRating(2)">★</span>
+        <span class="star-pick" onclick="setReviewRating(3)">★</span>
+        <span class="star-pick" onclick="setReviewRating(4)">★</span>
+        <span class="star-pick" onclick="setReviewRating(5)">★</span>
+      </div>
+      <label style="margin-top:14px">Your review</label>
+      <textarea id="review-text" placeholder="Share your experience fishing with this guide…" style="min-height:100px"></textarea>
+      <button class="save-btn" onclick="submitReview()">Submit review</button>
+    </div>
+  </div>
 </div>
 
 <!-- ── NEW POST SHEET ── -->
@@ -1445,6 +1647,273 @@ function renderReport(d) {
   }
 
   el.innerHTML = html;
+}
+
+// ══════════════════════════════════════════════
+// ── COMMUNITY TAB SWITCHING ──
+// ══════════════════════════════════════════════
+function switchCommTab(name) {
+  ['feed','guides'].forEach(t => {
+    document.getElementById('cpanel-' + t).style.display = (t === name) ? '' : 'none';
+    document.getElementById('ctab-'   + t).classList.toggle('active', t === name);
+  });
+  if (name === 'guides' && !guidesFetched) fetchGuides();
+}
+
+// ══════════════════════════════════════════════
+// ── GUIDES ──
+// ══════════════════════════════════════════════
+let guidesFetched = false;
+let allGuides     = [];
+let activeGuideId = null;
+let reviewRating  = 0;
+
+async function fetchGuides() {
+  guidesFetched = true;
+  const headers = { 'apikey': SUPABASE_KEY };
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/guides?select=*&order=created_at.asc`,
+    { headers }
+  );
+  allGuides = res.ok ? await res.json() : [];
+
+  // Fetch average ratings
+  const ratRes = await fetch(
+    `${SUPABASE_URL}/rest/v1/guide_reviews?select=guide_id,rating`,
+    { headers }
+  );
+  const ratings = ratRes.ok ? await ratRes.json() : [];
+
+  // Compute avg per guide
+  const ratingMap = {};
+  const countMap  = {};
+  ratings.forEach(r => {
+    if (!ratingMap[r.guide_id]) { ratingMap[r.guide_id] = 0; countMap[r.guide_id] = 0; }
+    ratingMap[r.guide_id] += r.rating;
+    countMap[r.guide_id]++;
+  });
+  allGuides.forEach(g => {
+    g._avgRating = countMap[g.id] ? (ratingMap[g.id] / countMap[g.id]) : null;
+    g._reviewCount = countMap[g.id] || 0;
+  });
+
+  renderGuides();
+}
+
+function starsHtml(avg, size = 13) {
+  if (avg === null) return `<span style="font-size:${size-2}px;color:var(--stone)">No reviews yet</span>`;
+  return [1,2,3,4,5].map(n =>
+    `<span class="star${n <= Math.round(avg) ? ' lit' : ''}" style="font-size:${size}px">★</span>`
+  ).join('');
+}
+
+function renderGuides() {
+  const el = document.getElementById('guide-list');
+  if (!allGuides.length) {
+    el.innerHTML = `<div style="text-align:center;padding:40px 20px;color:var(--stone);
+      background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius)">
+      <div style="font-size:28px;margin-bottom:10px">🎣</div>
+      <div style="font-size:14px">No guides listed yet.<br>Be the first to add one!</div>
+    </div>`;
+    return;
+  }
+  el.innerHTML = allGuides.map(g => {
+    const initials = (g.name || '?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    const rivers   = (g.rivers || []).slice(0,3);
+    return `
+      <div class="guide-card" onclick="openGuideDetail('${g.id}')">
+        <div class="guide-card-top">
+          <div class="guide-avatar">${initials}</div>
+          <div class="guide-card-info">
+            <div class="guide-card-name">${g.name}</div>
+            <div class="guide-stars">
+              ${starsHtml(g._avgRating, 13)}
+              ${g._avgRating !== null
+                ? `<span class="rating-num">${g._avgRating.toFixed(1)} · ${g._reviewCount} review${g._reviewCount!==1?'s':''}</span>`
+                : ''}
+            </div>
+            ${rivers.length ? `<div class="guide-rivers">
+              ${rivers.map(r=>`<span class="guide-river-pill">${r}</span>`).join('')}
+            </div>` : ''}
+          </div>
+        </div>
+        ${g.bio ? `<div class="guide-card-bio">${g.bio}</div>` : ''}
+        ${g.contact_url ? `<a class="guide-contact-link" href="${g.contact_url}" target="_blank" onclick="event.stopPropagation()">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          Book / Learn more
+        </a>` : ''}
+      </div>`;
+  }).join('');
+}
+
+async function openGuideDetail(id) {
+  activeGuideId = id;
+  const g = allGuides.find(x => x.id === id);
+  if (!g) return;
+
+  document.getElementById('guide-detail-heading').textContent = g.name;
+  document.getElementById('guide-detail-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+
+  const initials = (g.name || '?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  const rivers   = g.rivers || [];
+
+  // Show skeleton while reviews load
+  const bodyEl = document.getElementById('guide-detail-body');
+  bodyEl.innerHTML = `
+    <div class="guide-detail-avatar">${initials}</div>
+    <div class="guide-detail-name">${g.name}</div>
+    <div class="guide-detail-stars">${starsHtml(g._avgRating, 16)}
+      ${g._avgRating !== null ? `<span style="font-size:13px;color:var(--stone);margin-left:4px">${g._avgRating.toFixed(1)} (${g._reviewCount})</span>` : ''}
+    </div>
+    ${g.bio ? `<div class="guide-detail-bio">${g.bio}</div>` : ''}
+    ${rivers.length ? `<div class="guide-detail-section">
+      <div class="guide-detail-label">Waters Guided</div>
+      <div class="guide-rivers">${rivers.map(r=>`<span class="guide-river-pill">${r}</span>`).join('')}</div>
+    </div>` : ''}
+    ${g.contact_url ? `<div class="guide-detail-section">
+      <div class="guide-detail-label">Book / Contact</div>
+      <a href="${g.contact_url}" target="_blank" class="guide-contact-link" style="font-size:13px">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        ${g.contact_url}
+      </a>
+    </div>` : ''}
+    <div class="guide-detail-section">
+      <div class="guide-detail-label">Member Reviews</div>
+      <div id="guide-reviews-list"><div class="loading" style="padding:20px 0"><div class="spinner"></div></div></div>
+    </div>
+    <button class="write-review-btn" onclick="openAddReview()">Write a review</button>`;
+
+  // Fetch reviews
+  const session = await getSession();
+  const headers = { 'apikey': SUPABASE_KEY };
+  if (session) headers['Authorization'] = 'Bearer ' + session.access_token;
+
+  const [revRes, profilesRes] = await Promise.all([
+    fetch(`${SUPABASE_URL}/rest/v1/guide_reviews?guide_id=eq.${id}&select=*&order=created_at.desc`, { headers }),
+    fetch(`${SUPABASE_URL}/rest/v1/profiles?select=id,display_name`, { headers })
+  ]);
+  const reviews  = revRes.ok     ? await revRes.json()     : [];
+  const profiles = profilesRes.ok ? await profilesRes.json() : [];
+  const profileMap = {};
+  profiles.forEach(p => { profileMap[p.id] = p.display_name; });
+
+  const revEl = document.getElementById('guide-reviews-list');
+  if (!reviews.length) {
+    revEl.innerHTML = `<div style="font-size:13px;color:var(--stone);padding:8px 0">No reviews yet — be the first!</div>`;
+  } else {
+    revEl.innerHTML = reviews.map(r => {
+      const author  = profileMap[r.user_id] || 'Angler';
+      const dateStr = new Date(r.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+      return `<div class="review-item">
+        <div class="review-header">
+          <span class="review-author">${author}</span>
+          <span class="review-date">${dateStr}</span>
+        </div>
+        <div class="review-stars">${[1,2,3,4,5].map(n=>`<span class="star${n<=r.rating?' lit':''}">★</span>`).join('')}</div>
+        ${r.review_text ? `<div class="review-text">${r.review_text}</div>` : ''}
+      </div>`;
+    }).join('');
+  }
+}
+
+function openAddReview() {
+  reviewRating = 0;
+  document.getElementById('review-text').value = '';
+  document.querySelectorAll('.star-pick').forEach(s => s.classList.remove('lit'));
+  closeSheet('guide-detail-overlay');
+  setTimeout(() => {
+    document.getElementById('add-review-overlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }, 220);
+}
+
+function setReviewRating(n) {
+  reviewRating = n;
+  document.querySelectorAll('.star-pick').forEach((s, i) => {
+    s.classList.toggle('lit', i < n);
+  });
+}
+
+async function submitReview() {
+  if (!reviewRating) { alert('Please choose a star rating.'); return; }
+  const text = document.getElementById('review-text').value.trim();
+  const session = await getSession();
+  if (!session) { alert('You must be signed in to leave a review.'); return; }
+
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/guide_reviews`, {
+    method: 'POST',
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer ' + session.access_token,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=minimal'
+    },
+    body: JSON.stringify({
+      guide_id:    activeGuideId,
+      user_id:     session.user.id,
+      rating:      reviewRating,
+      review_text: text || null
+    })
+  });
+
+  if (res.ok) {
+    closeSheet('add-review-overlay');
+    // Refresh ratings
+    guidesFetched = false;
+    await fetchGuides();
+    // Re-open detail
+    setTimeout(() => openGuideDetail(activeGuideId), 300);
+  } else {
+    const err = await res.json().catch(()=>({}));
+    alert(err.message || 'Could not save your review. You may have already reviewed this guide.');
+  }
+}
+
+function openAddGuide() {
+  ['guide-name','guide-bio','guide-rivers','guide-contact'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  document.getElementById('add-guide-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+async function submitGuide() {
+  const name    = document.getElementById('guide-name').value.trim();
+  const bio     = document.getElementById('guide-bio').value.trim();
+  const rivers  = document.getElementById('guide-rivers').value.split(',').map(s=>s.trim()).filter(Boolean);
+  const contact = document.getElementById('guide-contact').value.trim();
+
+  if (!name) { alert('Please enter the guide\'s name.'); return; }
+
+  const session = await getSession();
+  if (!session) { alert('You must be signed in to add a guide.'); return; }
+
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/guides`, {
+    method: 'POST',
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer ' + session.access_token,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=minimal'
+    },
+    body: JSON.stringify({
+      name,
+      bio:         bio     || null,
+      rivers:      rivers.length ? rivers : null,
+      contact_url: contact || null,
+      created_by:  session.user.id
+    })
+  });
+
+  if (res.ok) {
+    closeSheet('add-guide-overlay');
+    guidesFetched = false;
+    await fetchGuides();
+  } else {
+    alert('Could not add guide. Please try again.');
+  }
 }
 
 // ── INIT ──

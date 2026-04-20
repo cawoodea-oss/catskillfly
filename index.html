@@ -1043,11 +1043,26 @@ function openReport(id) {
 
   const speciesRows = log.fish_counts
     ? Object.entries(log.fish_counts).map(([sp, ct]) => {
-        const sizes = log.fish_sizes?.[sp];
-        const sizesStr = sizes?.length
-          ? `<span style="font-size:11px;color:var(--stone,#888);margin-left:6px">${sizes.map(s => s + '"').join(', ')}</span>`
-          : '';
-        return `<tr><td>${sp}${sizesStr}</td><td>${ct}</td></tr>`;
+        const sizes = log.fish_sizes?.[sp] || [];
+        // Build sub-rows for individual fish measurements
+        const fishRows = sizes.map((f, i) => {
+          if (!f || (f.length == null && f.weight == null)) return '';
+          const parts = [];
+          if (f.length != null) parts.push(`${f.length}"`);
+          if (f.weight != null) parts.push(`${f.weight} lb`);
+          return parts.length
+            ? `<div style="font-size:11px;color:var(--stone,#888);padding-left:4px;line-height:1.8">
+                 #${i+1} — ${parts.join(' · ')}
+               </div>`
+            : '';
+        }).join('');
+        return `<tr>
+          <td style="vertical-align:top">
+            ${sp}
+            ${fishRows ? `<div style="margin-top:2px">${fishRows}</div>` : ''}
+          </td>
+          <td style="vertical-align:top">${ct}</td>
+        </tr>`;
       }).join('')
     : '';
 
